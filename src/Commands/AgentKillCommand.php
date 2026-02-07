@@ -33,39 +33,19 @@ class AgentKillCommand extends Command
         // Get running screen sessions
         $localScreens = $this->getLocalScreens();
 
-        $remoteHosts = collect($agents)
-            ->filter(fn ($a) => $a['remote'] ?? false)
-            ->pluck('host')
-            ->unique()
-            ->values();
-
-        $remoteScreens = [];
-        foreach ($remoteHosts as $host) {
-            $remoteScreens[$host] = $this->getRemoteScreens($host);
-        }
-
         // Build list of running agents
         $runningAgents = [];
         foreach ($agents as $screenName => $agent) {
-            $isRemote = $agent['remote'] ?? false;
-            $host = $agent['host'] ?? null;
-
-            if ($isRemote && $host) {
-                $isRunning = in_array($screenName, $remoteScreens[$host] ?? []);
-            } else {
-                $isRunning = in_array($screenName, $localScreens);
-            }
+            $isRunning = in_array($screenName, $localScreens);
 
             if ($isRunning) {
                 $startedAt = Carbon::parse($agent['startedAt']);
                 $duration = $startedAt->diffForHumans(syntax: Carbon::DIFF_ABSOLUTE);
-                $location = $isRemote ? $host : 'local';
 
                 $runningAgents[$screenName] = [
                     ...$agent,
                     'screenName' => $screenName,
                     'duration' => $duration,
-                    'location' => $location,
                 ];
             }
         }
@@ -88,9 +68,8 @@ class AgentKillCommand extends Command
             $options = [];
             foreach ($runningAgents as $name => $agent) {
                 $options[$name] = sprintf(
-                    '%s (%s, %s)',
+                    '%s (%s)',
                     $agent['project'],
-                    $agent['location'],
                     $agent['duration']
                 );
             }
@@ -111,22 +90,14 @@ class AgentKillCommand extends Command
 
         $agent = $runningAgents[$screenName];
 
-        if (! confirm("Kill agent '{$agent['project']}' ({$agent['location']})?", default: false)) {
+        if (! confirm("Kill agent '{$agent['project']}'?", default: false)) {
             $this->info('Cancelled.');
             return 0;
         }
 
         // Kill the screen session
-        $isRemote = $agent['remote'] ?? false;
-        $host = $agent['host'] ?? null;
-
-        if ($isRemote && $host) {
-            $this->info("Killing remote screen session on {$host}...");
-            shell_exec("ssh {$host} 'screen -S {$screenName} -X quit 2>/dev/null'");
-        } else {
-            $this->info('Killing local screen session...');
-            shell_exec("screen -S {$screenName} -X quit 2>/dev/null");
-        }
+        $this->info('Killing screen session...');
+        shell_exec("screen -S {$screenName} -X quit 2>/dev/null");
 
         // Remove from tracking
         unset($agents[$screenName]);
@@ -145,13 +116,6 @@ class AgentKillCommand extends Command
     protected function getLocalScreens(): array
     {
         $output = shell_exec('screen -ls 2>/dev/null') ?? '';
-
-        return $this->parseScreenOutput($output);
-    }
-
-    protected function getRemoteScreens(string $host): array
-    {
-        $output = shell_exec("ssh {$host} 'screen -ls 2>/dev/null'") ?? '';
 
         return $this->parseScreenOutput($output);
     }

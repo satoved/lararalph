@@ -28,43 +28,22 @@ class AgentStatusCommand extends Command
             return 0;
         }
 
-        // Get running screen sessions (local)
+        // Get running screen sessions
         $localScreens = $this->getLocalScreens();
-
-        // Get running screen sessions (remote) - group by host
-        $remoteHosts = collect($agents)
-            ->filter(fn ($a) => $a['remote'] ?? false)
-            ->pluck('host')
-            ->unique()
-            ->values();
-
-        $remoteScreens = [];
-        foreach ($remoteHosts as $host) {
-            $remoteScreens[$host] = $this->getRemoteScreens($host);
-        }
 
         $rows = [];
         $completed = [];
 
         foreach ($agents as $screenName => $agent) {
-            $isRemote = $agent['remote'] ?? false;
-            $host = $agent['host'] ?? null;
-
-            if ($isRemote && $host) {
-                $isRunning = in_array($screenName, $remoteScreens[$host] ?? []);
-            } else {
-                $isRunning = in_array($screenName, $localScreens);
-            }
+            $isRunning = in_array($screenName, $localScreens);
 
             $startedAt = Carbon::parse($agent['startedAt']);
             $duration = $startedAt->locale('en')->diffForHumans(syntax: Carbon::DIFF_ABSOLUTE) . ' ago';
 
             $status = $isRunning ? '<fg=yellow>running</>' : '<fg=green>complete</>';
-            $location = $isRemote ? "<fg=cyan>{$host}</>" : 'local';
 
             $rows[] = [
                 $agent['project'],
-                $location,
                 $status,
                 $duration,
                 $screenName,
@@ -76,7 +55,7 @@ class AgentStatusCommand extends Command
         }
 
         $this->table(
-            ['Project', 'Location', 'Status', 'Started', 'Screen'],
+            ['Project', 'Status', 'Started', 'Screen'],
             $rows
         );
 
@@ -114,13 +93,6 @@ class AgentStatusCommand extends Command
     protected function getLocalScreens(): array
     {
         $output = shell_exec('screen -ls 2>/dev/null') ?? '';
-
-        return $this->parseScreenOutput($output);
-    }
-
-    protected function getRemoteScreens(string $host): array
-    {
-        $output = shell_exec("ssh {$host} 'screen -ls 2>/dev/null'") ?? '';
 
         return $this->parseScreenOutput($output);
     }

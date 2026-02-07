@@ -8,53 +8,41 @@ use function Laravel\Prompts\search;
 class AgentTail extends Command
 {
     protected $signature = 'ralph:tail
-                            {session? : The session name to tail (interactive if not provided)}
-                            {--local : Attach to a local screen session (default)}
-                            {--remote : Attach to a screen session on claudebox}';
+                            {session? : The session name to tail (interactive if not provided)}';
 
     protected $description = 'Attach to a running agent loop screen session';
-
-    protected bool $remote = false;
-    protected string $host = 'claudebox';
 
     public function handle()
     {
         $session = $this->argument('session');
-        $this->remote = $this->option('remote');
-        $repo = basename(getcwd());
 
         // If no session specified, let user choose from running sessions
         if (!$session) {
-            $session = $this->chooseSession($repo);
+            $session = $this->chooseSession();
             if (!$session) {
                 return 1;
             }
         }
 
-        $screenName = $this->remote ? "agent-{$repo}-{$session}" : "agent-{$session}";
+        $screenName = "agent-{$session}";
         $this->info("Attaching to screen session: {$screenName}");
         $this->info("Press Ctrl+A then D to detach without stopping the session.");
         $this->newLine();
 
         $command = "screen -r {$screenName}";
-        if ($this->remote) {
-            $command = "ssh -t {$this->host} '{$command}'";
-        }
 
         passthru($command, $exitCode);
         return $exitCode;
     }
 
-    protected function chooseSession(string $repo): ?string
+    protected function chooseSession(): ?string
     {
-        $this->info($this->remote ? "Fetching running agent sessions on claudebox..." : "Fetching running agent sessions...");
+        $this->info("Fetching running agent sessions...");
 
-        $sessions = $this->remote
-            ? $this->getRemoteSessions($repo)
-            : $this->getLocalSessions();
+        $sessions = $this->getLocalSessions();
 
         if (empty($sessions)) {
-            $this->error($this->remote ? "No running agent sessions found for {$repo}" : "No running agent sessions found");
+            $this->error("No running agent sessions found");
             return null;
         }
 
@@ -77,19 +65,6 @@ class AgentTail extends Command
     {
         // Extract everything after "agent-" (handles both "agent-project" and "agent-project-wt")
         $output = shell_exec("screen -ls 2>/dev/null | grep -oE 'agent-[^[:space:]]+' | sed 's/^agent-//'");
-
-        if (!$output) {
-            return [];
-        }
-
-        return array_filter(array_map('trim', explode("\n", $output)));
-    }
-
-    protected function getRemoteSessions(string $repo): array
-    {
-        // Extract everything after "agent-{repo}-" (handles both with and without -wt suffix)
-        $listCmd = "ssh {$this->host} 'screen -ls 2>/dev/null | grep -oE \"agent-{$repo}-[^[:space:]]+\" | sed \"s/^agent-{$repo}-//\"'";
-        $output = shell_exec($listCmd);
 
         if (!$output) {
             return [];
