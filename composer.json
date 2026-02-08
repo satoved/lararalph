@@ -30,7 +30,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Satoved\\Lararalph\\": "src/",
+            "Satoved\\Lararalph\\": "src/"
         }
     },
     "autoload-dev": {
@@ -58,7 +58,7 @@
         "laravel": {
             "providers": [
                 "Satoved\\Lararalph\\LararalphServiceProvider"
-            ],
+            ]
         }
     },
     "bin": [
