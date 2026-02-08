@@ -62,9 +62,7 @@
         }
     },
     "bin": [
-        "bin/ralph-loop.sh",
-        "bin/ralph-loop.js",
-        "bin/ralph-once.sh"
+        "bin/ralph-loop.js"
     ],
     "minimum-stability": "dev",
     "prefer-stable": true

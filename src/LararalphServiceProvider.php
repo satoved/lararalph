@@ -2,13 +2,14 @@
 
 namespace Satoved\Lararalph;
 
+use Satoved\Lararalph\Commands\BuildCommand;
 use Satoved\Lararalph\Commands\AgentKillCommand;
 use Satoved\Lararalph\Commands\AgentLoop;
-use Satoved\Lararalph\Commands\AgentPlanCommand;
+use Satoved\Lararalph\Commands\PlanCommand;
 use Satoved\Lararalph\Commands\AgentStatusCommand;
 use Satoved\Lararalph\Commands\AgentTail;
-use Satoved\Lararalph\Commands\WorktreeIdeCommand;
-use Satoved\Lararalph\Commands\WorktreeSetupCommand;
+use Satoved\Lararalph\Commands\IdeCommand;
+use Satoved\Lararalph\Commands\WorktreeCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -19,14 +20,16 @@ class LararalphServiceProvider extends PackageServiceProvider
         $package
             ->name('lararalph')
             ->hasConfigFile()
+            ->hasViews()
             ->hasCommands([
+                BuildCommand::class,
                 AgentKillCommand::class,
                 AgentLoop::class,
-                AgentPlanCommand::class,
+                PlanCommand::class,
                 AgentStatusCommand::class,
                 AgentTail::class,
-                WorktreeIdeCommand::class,
-                WorktreeSetupCommand::class,
+                IdeCommand::class,
+                WorktreeCommand::class,
             ]);
     }
 
@@ -40,7 +43,7 @@ class LararalphServiceProvider extends PackageServiceProvider
         // Publish .claude directory (settings, skills, .gitignore)
         $this->publishes([
             __DIR__.'/../.claude' => base_path('.claude'),
-        ], 'lararalph-specs');
+        ], 'lararalph-claude');
     }
 
     /**

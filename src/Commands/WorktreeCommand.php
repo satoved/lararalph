@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 use function Laravel\Prompts\spin;
 
-class WorktreeSetupCommand extends Command
+class WorktreeCommand extends Command
 {
     protected $signature = 'ralph:setup';
 

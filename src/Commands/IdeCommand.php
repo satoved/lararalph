@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 use function Laravel\Prompts\search;
 
-class WorktreeIdeCommand extends Command
+class IdeCommand extends Command
 {
     protected $signature = 'ralph:ide {path?}';
 

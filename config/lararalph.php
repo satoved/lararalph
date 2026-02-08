@@ -11,15 +11,4 @@ return [
             )
         ),
     ],
-
-    'claude' => [
-        'settings' => [
-            'defaultMode' => 'acceptEdits', // or 'dangerouslySkipPermissions'
-            'enableAllProjectMcpServers' => true,
-            'sandbox' => [
-                'enabled' => true,
-                'autoAllowBashIfSandboxed' => true,
-            ],
-        ],
-    ],
 ];

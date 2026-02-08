@@ -22,6 +22,7 @@ Publish the config file and specs/claude assets in one go:
 ```bash
 php artisan vendor:publish --tag="lararalph-config"
 php artisan vendor:publish --tag="lararalph-specs"
+php artisan vendor:publish --tag="lararalph-claude"
 ```
 
 **Config** (`config/lararalph.php`) -- IDE, worktree setup commands, and Claude settings:
