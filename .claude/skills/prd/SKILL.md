@@ -1,12 +1,12 @@
 ---
 name: prd
-description: Create a new PRD (Product Requirements Document) for handoff to a developer. Use when user wants to spec out a new feature.
+description: Create a new PRD (Product Requirements Document) with functional requirements only. Use when user wants to spec out a new feature.
 user-invocable: true
 ---
 
 # Create PRD
 
-Create a PRD (Product Requirements Document) for handoff to a developer.
+Create a PRD (Product Requirements Document) focused on functional requirements for handoff to a developer.
 
 ## Usage
 
@@ -20,154 +20,107 @@ If no description is provided, ask clarifying questions to understand the featur
 ## Behavior
 
 1. **Gather Requirements**: Ask clarifying questions to fully understand the feature scope
-2. **Research Codebase**: Explore relevant existing code, models, and patterns
-3. **Create PRD Directory**: Create a new folder in `prd/_to_refine/` with a kebab-case name
-4. **Write project.md**: Document the feature requirements
-5. **Create progress.md**: Initialize an empty progress tracking file
+2. **Research Codebase**: Explore relevant existing code, models, and patterns to understand context
+3. **Create PRD Directory**: Create a new folder in `specs/backlog/` with timestamp prefix: `YYYY_MM_DD_feature-name`
+4. **Write PRD.md**: Document the functional requirements (no technical implementation details)
 
-## PRD Directory Structure
+## Directory Structure
 
 ```
-prd/
-├── _to_refine/              # Need refinement
-│   └── feature-name/
-│       ├── project.md    # Full feature specification
-│       └── progress.md   # Developer progress tracking (empty initially)
-├── backlog/              # Active/pending PRDs
-│   └── feature-name/
-│       ├── project.md    # Full feature specification
-│       └── progress.md   # Developer progress tracking (empty initially)
-└── complete/             # Finished PRDs (moved here when done)
-    └── old-feature/
-        ├── project.md
-        └── progress.md
+specs/
+├── backlog/
+│   └── 2024-01-15-feature-name/
+│       ├── PRD.md                    # Functional requirements (created by this skill)
+│       ├── IMPLEMENTATION_PLAN.md    # Technical plan (created by ralph:plan later)
+│       └── logs/                     # Agent loop logs
+└── complete/
+    └── 2024-01-15-old-feature/
+        ├── PRD.md
+        └── IMPLEMENTATION_PLAN.md
 ```
 
-New PRDs are always created in `prd/_to_refine/`. When a PRD is refined, it will be added to `prd/backlog` manually.
-When a PRD is finished it will move to `prd/complete`
+New PRDs are always created in `specs/backlog/` with a timestamp prefix (e.g., `2024-01-15-feature-name`).
+When a PRD is finished, it gets moved to `specs/complete/`.
 
-## project.md Template
+## PRD.md Template
 
 ```markdown
 # Feature Name
 
-## Overview
-Brief 2-3 sentence description of what this feature does and why it's needed.
+## Problem Statement
+What pain point are we solving? Who experiences this problem and when?
 
-## Goals
-- Primary goal
-- Secondary goals
+## Jobs To Be Done
+What job is the user hiring this feature to do? Use the JTBD format:
+- When [situation], I want to [motivation], so I can [expected outcome]
 
 ## User Stories
 - As a [role], I want [feature] so that [benefit]
+- As a [role], I want [feature] so that [benefit]
 
-## Requirements
+## Acceptance Criteria
 
-### Functional Requirements
-1. Requirement with clear acceptance criteria
+### Must Have
+1. Clear, testable criterion with specific behavior
+2. Another testable criterion
+3. ...
+
+### Should Have
+1. Important but not critical criteria
 2. ...
 
-### Non-Functional Requirements
-- Performance considerations
-- Security requirements
-- Accessibility needs
+### Nice to Have
+1. Lower priority items
+2. ...
 
-## Technical Approach
-
-### Affected Areas
-- Models: List affected/new models
-- Controllers: List affected/new controllers
-- Frontend: List affected/new components
-- Routes: New API endpoints or page routes
-
-### Database Changes
-- New tables or columns
-- Migrations needed
-
-### API Endpoints
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST   | /api/... | Create...   |
-
-### Frontend Components
-- New Vue components needed
-- Existing components to modify
-
-### Testing strategies
-- Browser testing requirements
-- Unit testing testing requirements
-
-## UI/UX
-
-### User Flow
-1. Step-by-step user interaction
-
-### Mockups/Wireframes
-(Link or description of visual design if available)
+## User Flow
+1. Step-by-step description of user interaction
+2. Include decision points and branches
+3. Note error states and how to handle them
 
 ## Edge Cases
-- Edge case 1 and how to handle it
-- Edge case 2 and how to handle it
+- Edge case 1 and expected behavior
+- Edge case 2 and expected behavior
 
 ## Out of Scope
 - Features explicitly NOT included in this phase
+- Future enhancements to consider later
 
 ## Open Questions
 - [ ] Question that needs answering before implementation
-
-## Dependencies
-- External services or features this depends on
-
-## Testing Strategy
-- Unit tests needed
-- Integration tests needed
-- Manual testing scenarios
-
-## Implementation Tasks (Prioritized)
-
-Tasks ordered by priority. Check off as completed.
-
-### High Priority
-- [ ] Task 1 - Most critical path item
-- [ ] Task 2 - Required for core functionality
-
-### Medium Priority
-- [ ] Task 3 - Important but not blocking
-- [ ] Task 4 - Enhances the feature
-
-### Low Priority
-- [ ] Task 5 - Nice to have
-- [ ] Task 6 - Polish/cleanup
+- [ ] Another question to clarify
 ```
-
-## progress.md Template
-
-Create an empty file.
 
 ## Guidelines
 
-1. **Be Specific**: Vague requirements lead to misaligned implementations
-2. **Include Context**: Explain WHY, not just WHAT
-3. **Reference Existing Code**: Point to similar patterns in the codebase
-4. **Consider Edge Cases**: Think through error states and unusual inputs
-5. **Define Success**: Clear acceptance criteria for each requirement
+1. **Focus on WHAT, not HOW**: Describe desired behavior and outcomes, not implementation
+2. **Be Specific**: Vague requirements lead to misaligned implementations
+3. **Include Context**: Explain WHY this feature matters
+4. **User-Centric Language**: Write from the user's perspective
+5. **Testable Criteria**: Every acceptance criterion should be verifiable
 6. **Keep Scope Bounded**: Explicitly state what's out of scope
-7. **Use Project Conventions**: Follow patterns from CLAUDE.md (hash IDs, axios, etc.)
+7. **No Technical Details**: Don't include database schemas, API endpoints, or code - those would go in IMPLEMENTATION_PLAN.md
+
+## Timestamp Format
+
+Use `YYYY-MM-DD` format for the folder prefix:
+- Good: `2024-01-15-user-notifications`
+- Bad: `20240115-user-notifications` (no dashes in date)
+- Bad: `user-notifications` (missing timestamp)
 
 ## Examples
 
-### Example: Creating a PRD for a new notification feature
+### Example: Creating a PRD for a notification feature
 
 ```
 /prd Add push notifications for order status updates
 ```
 
 Claude will:
-1. Ask about notification types, triggers, and user preferences
-2. Research existing notification code and order status handling
-3. Create `prd/_to_refine/order-push-notifications/`
-4. Write comprehensive project.md with technical approach
-5. Create empty progress.md
+1. Ask about notification triggers, user preferences, and expected behavior
+2. Research existing notification patterns in the codebase for context, focusing on frontend UX
+3. Create `specs/backlog/2024-01-15-order-push-notifications/`
+4. Write comprehensive PRD.md with acceptance criteria
 
 ### Example: Interactive PRD creation
 
@@ -178,6 +131,7 @@ Claude will:
 Claude will prompt: "What feature would you like to create a PRD for?"
 
 Then ask follow-up questions like:
+- "What problem does this solve for users?"
 - "Who is the target user for this feature?"
-- "What problem does this solve?"
-- "Are there any existing similar features in the codebase?"
+- "What does success look like for this feature?"
+- "Are there any constraints or limitations to consider?"

@@ -30,7 +30,7 @@ class AgentLoop extends Command
 
         $this->info("Repo: {$repo}");
 
-        // If no project specified, let user choose from available PRDs
+        // If no project specified, let user choose from available specs
         if (!$project) {
             $project = $this->chooseProject();
             if (!$project) {
@@ -38,12 +38,35 @@ class AgentLoop extends Command
             }
         }
 
-        // Validate project files exist
-        $prdFile = getcwd() . "/prd/backlog/{$project}/project.md";
-        if (!file_exists($prdFile)) {
-            $this->error("PRD file not found: prd/backlog/{$project}/project.md");
+        // Resolve the spec path (supports both full folder name and partial match)
+        $specPath = $this->resolveSpecPath($project);
+        if (!$specPath) {
+            $this->error("Spec not found: {$project}");
+            $this->info("Available specs in specs/backlog/:");
+            foreach ($this->getLocalProjects() as $spec) {
+                $this->line("  - {$spec}");
+            }
             return 1;
         }
+
+        // Validate PRD.md exists
+        $prdFile = $specPath . '/PRD.md';
+        if (!file_exists($prdFile)) {
+            $this->error("PRD.md not found at: {$prdFile}");
+            return 1;
+        }
+
+        // Require IMPLEMENTATION_PLAN.md to exist
+        $planFile = $specPath . '/IMPLEMENTATION_PLAN.md';
+        if (!file_exists($planFile)) {
+            $this->error("IMPLEMENTATION_PLAN.md not found at: {$planFile}");
+            $this->newLine();
+            $this->info("Run 'php artisan ralph:plan {$project}' first to create an implementation plan.");
+            return 1;
+        }
+
+        // Use the resolved spec folder name for consistency
+        $project = basename($specPath);
 
         $repoPath = getcwd();
 
@@ -170,12 +193,13 @@ class AgentLoop extends Command
 
     protected function chooseProject(): ?string
     {
-        $this->info("Fetching available PRDs...");
+        $this->info("Fetching available specs...");
 
         $projects = $this->getLocalProjects();
 
         if (empty($projects)) {
-            $this->error("No PRDs found");
+            $this->error("No specs found in specs/backlog/");
+            $this->info("Run '/prd' to create a new spec first.");
             return null;
         }
 
@@ -183,7 +207,7 @@ class AgentLoop extends Command
         $projects = array_combine($projects, $projects);
 
         return search(
-            label: 'Select a PRD',
+            label: 'Select a spec',
             options: fn (string $value) => strlen($value) > 0
                 ? array_filter($projects, fn ($p) => str_contains(strtolower($p), strtolower($value)))
                 : $projects,
@@ -192,15 +216,59 @@ class AgentLoop extends Command
 
     protected function getLocalProjects(): array
     {
-        $prdDir = getcwd() . '/prd/backlog';
-        if (!is_dir($prdDir)) {
+        $specsDir = getcwd() . '/specs/backlog';
+        if (!is_dir($specsDir)) {
             return [];
         }
 
         return array_values(array_filter(
-            scandir($prdDir),
-            fn ($dir) => $dir !== '.' && $dir !== '..' && is_dir("{$prdDir}/{$dir}")
+            scandir($specsDir),
+            fn ($dir) => $dir !== '.' && $dir !== '..' && is_dir("{$specsDir}/{$dir}")
         ));
+    }
+
+    protected function resolveSpecPath(string $feature): ?string
+    {
+        $backlogDir = getcwd() . '/specs/backlog';
+        $completeDir = getcwd() . '/specs/complete';
+
+        // First, try exact match in backlog
+        $exactPath = $backlogDir . '/' . $feature;
+        if (is_dir($exactPath)) {
+            return $exactPath;
+        }
+
+        // Try exact match in complete
+        $exactPath = $completeDir . '/' . $feature;
+        if (is_dir($exactPath)) {
+            return $exactPath;
+        }
+
+        // Try partial match (search for feature name after date prefix)
+        if (is_dir($backlogDir)) {
+            foreach (scandir($backlogDir) as $dir) {
+                if ($dir === '.' || $dir === '..') continue;
+                // Match if the feature name appears after the date prefix
+                if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $dir, $matches)) {
+                    if ($matches[1] === $feature || str_contains($dir, $feature)) {
+                        return $backlogDir . '/' . $dir;
+                    }
+                }
+            }
+        }
+
+        if (is_dir($completeDir)) {
+            foreach (scandir($completeDir) as $dir) {
+                if ($dir === '.' || $dir === '..') continue;
+                if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $dir, $matches)) {
+                    if ($matches[1] === $feature || str_contains($dir, $feature)) {
+                        return $completeDir . '/' . $dir;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     protected function trackAgent(string $screenName, string $project, string $workingPath): void

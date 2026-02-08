@@ -4,6 +4,7 @@ namespace Satoved\Lararalph;
 
 use Satoved\Lararalph\Commands\AgentKillCommand;
 use Satoved\Lararalph\Commands\AgentLoop;
+use Satoved\Lararalph\Commands\AgentPlanCommand;
 use Satoved\Lararalph\Commands\AgentStatusCommand;
 use Satoved\Lararalph\Commands\AgentTail;
 use Satoved\Lararalph\Commands\WorktreeIdeCommand;
@@ -21,11 +22,20 @@ class LararalphServiceProvider extends PackageServiceProvider
             ->hasCommands([
                 AgentKillCommand::class,
                 AgentLoop::class,
+                AgentPlanCommand::class,
                 AgentStatusCommand::class,
                 AgentTail::class,
                 WorktreeIdeCommand::class,
                 WorktreeSetupCommand::class,
             ]);
+    }
+
+    public function packageBooted(): void
+    {
+        // Publish specs directory structure to Laravel root
+        $this->publishes([
+            __DIR__.'/../specs' => base_path('specs'),
+        ], 'lararalph-specs');
     }
 
     /**

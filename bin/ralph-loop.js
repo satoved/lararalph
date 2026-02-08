@@ -70,43 +70,75 @@ const colors = {
   white: '\x1b[37m',
 };
 
-const PRD_DIR = 'prd';
-const PRD_BACKLOG_DIR = 'prd/backlog';
-const PRD_COMPLETE_DIR = 'prd/complete';
+const SPECS_DIR = 'specs';
+const SPECS_BACKLOG_DIR = 'specs/backlog';
+const SPECS_COMPLETE_DIR = 'specs/complete';
 const DEFAULT_ITERATIONS = 10;
 
 const args = process.argv.slice(2);
 const VERBOSE = args.includes('--verbose') || args.includes('-v');
 const filteredArgs = args.filter(a => a !== '--verbose' && a !== '-v');
 
-// Resolve PRD path - checks backlog first, then complete
-function resolvePrdPath(projectName) {
-  const backlogPath = path.join(PRD_BACKLOG_DIR, projectName);
-  const completePath = path.join(PRD_COMPLETE_DIR, projectName);
+// Resolve spec path - checks backlog first, then complete
+// Supports both exact match and partial match (feature name without date prefix)
+function resolveSpecPath(projectName) {
+  const backlogPath = path.join(SPECS_BACKLOG_DIR, projectName);
+  const completePath = path.join(SPECS_COMPLETE_DIR, projectName);
 
-  if (fs.existsSync(backlogPath) && fs.existsSync(path.join(backlogPath, 'project.md'))) {
+  // Try exact match first
+  if (fs.existsSync(backlogPath) && fs.existsSync(path.join(backlogPath, 'PRD.md'))) {
     return backlogPath;
   }
-  if (fs.existsSync(completePath) && fs.existsSync(path.join(completePath, 'project.md'))) {
+  if (fs.existsSync(completePath) && fs.existsSync(path.join(completePath, 'PRD.md'))) {
     return completePath;
   }
+
+  // Try partial match (search for feature name after date prefix)
+  const datePattern = /^\d{4}-\d{2}-\d{2}-(.+)$/;
+
+  if (fs.existsSync(SPECS_BACKLOG_DIR)) {
+    const dirs = fs.readdirSync(SPECS_BACKLOG_DIR);
+    for (const dir of dirs) {
+      const match = dir.match(datePattern);
+      if (match && (match[1] === projectName || dir.includes(projectName))) {
+        const fullPath = path.join(SPECS_BACKLOG_DIR, dir);
+        if (fs.existsSync(path.join(fullPath, 'PRD.md'))) {
+          return fullPath;
+        }
+      }
+    }
+  }
+
+  if (fs.existsSync(SPECS_COMPLETE_DIR)) {
+    const dirs = fs.readdirSync(SPECS_COMPLETE_DIR);
+    for (const dir of dirs) {
+      const match = dir.match(datePattern);
+      if (match && (match[1] === projectName || dir.includes(projectName))) {
+        const fullPath = path.join(SPECS_COMPLETE_DIR, dir);
+        if (fs.existsSync(path.join(fullPath, 'PRD.md'))) {
+          return fullPath;
+        }
+      }
+    }
+  }
+
   return null;
 }
 
-// Get projects from backlog sorted by creation time (newest first)
+// Get specs from backlog sorted by creation time (newest first)
 function getProjects() {
-  if (!fs.existsSync(PRD_BACKLOG_DIR)) {
+  if (!fs.existsSync(SPECS_BACKLOG_DIR)) {
     return [];
   }
 
-  return fs.readdirSync(PRD_BACKLOG_DIR)
+  return fs.readdirSync(SPECS_BACKLOG_DIR)
     .filter(name => {
-      const projectPath = path.join(PRD_BACKLOG_DIR, name);
+      const projectPath = path.join(SPECS_BACKLOG_DIR, name);
       return fs.statSync(projectPath).isDirectory() &&
-        fs.existsSync(path.join(projectPath, 'project.md'));
+        fs.existsSync(path.join(projectPath, 'PRD.md'));
     })
     .map(name => {
-      const projectPath = path.join(PRD_BACKLOG_DIR, name);
+      const projectPath = path.join(SPECS_BACKLOG_DIR, name);
       const stat = fs.statSync(projectPath);
       return { name, birthtime: stat.birthtime };
     })
@@ -188,43 +220,42 @@ async function getConfig() {
   if (filteredArgs.length >= 1) {
     // Project provided as argument
     const project = filteredArgs[0];
-    const prdPath = resolvePrdPath(project);
-    if (!prdPath) {
-      console.error(`${colors.magenta}Project not found in ${PRD_BACKLOG_DIR}/ or ${PRD_COMPLETE_DIR}/: ${project}${colors.reset}`);
+    const specPath = resolveSpecPath(project);
+    if (!specPath) {
+      console.error(`${colors.magenta}Spec not found in ${SPECS_BACKLOG_DIR}/ or ${SPECS_COMPLETE_DIR}/: ${project}${colors.reset}`);
       process.exit(1);
     }
     const iterations = filteredArgs[1] ? parseInt(filteredArgs[1], 10) : DEFAULT_ITERATIONS;
-    return { project, prdPath, iterations };
+    return { project: path.basename(specPath), specPath, iterations };
   }
 
   // Interactive mode
   const projects = getProjects();
 
   if (projects.length === 0) {
-    console.error(`${colors.magenta}No projects found in ${PRD_BACKLOG_DIR}/${colors.reset}`);
-    console.log(`${colors.dim}Create a project directory with project.md and progress.md${colors.reset}`);
+    console.error(`${colors.magenta}No specs found in ${SPECS_BACKLOG_DIR}/${colors.reset}`);
+    console.log(`${colors.dim}Run '/prd' to create a new spec first${colors.reset}`);
     process.exit(1);
   }
 
   const project = await selectProject(projects);
-  const prdPath = path.join(PRD_BACKLOG_DIR, project);
+  const specPath = path.join(SPECS_BACKLOG_DIR, project);
   const iterations = await promptIterations();
 
-  return { project, prdPath, iterations };
+  return { project, specPath, iterations };
 }
 
-function buildPrompt(prdPath) {
-  const prdFile = `${prdPath}/project.md`;
-  const progressFile = `${prdPath}/progress.md`;
+function buildPrompt(specPath) {
+  const prdFile = `${specPath}/PRD.md`;
+  const planFile = `${specPath}/IMPLEMENTATION_PLAN.md`;
 
-  return `@${prdFile} @${progressFile}
-1. Find the highest-priority task and implement it.
+  return `@${prdFile} @${planFile}
+1. Find the highest-priority unchecked task in IMPLEMENTATION_PLAN.md and implement it.
 2. Run your tests and type checks.
-3. Update the PRD with what was done.
-4. Append your progress to progress.md and add checkboxes where needed in project.md.
-5. Commit and push your changes.
+3. Mark the task as complete in IMPLEMENTATION_PLAN.md by checking its checkbox.
+4. Commit and push your changes.
 ONLY WORK ON A SINGLE TASK.
-If the PRD is complete, output <promise>COMPLETE</promise>.`;
+If all tasks in IMPLEMENTATION_PLAN.md are complete, output <promise>COMPLETE</promise>.`;
 }
 
 function formatToolUse(toolUse) {
@@ -390,31 +421,32 @@ async function runClaudeStreaming(prompt) {
 }
 
 async function main() {
-  const { project, prdPath, iterations } = await getConfig();
+  const { project, specPath, iterations } = await getConfig();
 
-  // Validate project files
-  const prdFile = `${prdPath}/project.md`;
-  const progressFile = `${prdPath}/progress.md`;
+  // Validate spec files
+  const prdFile = `${specPath}/PRD.md`;
+  const planFile = `${specPath}/IMPLEMENTATION_PLAN.md`;
 
   if (!fs.existsSync(prdFile)) {
-    console.error(`${colors.magenta}Error: PRD file not found: ${prdFile}${colors.reset}`);
+    console.error(`${colors.magenta}Error: PRD.md not found: ${prdFile}${colors.reset}`);
     process.exit(1);
   }
 
-  if (!fs.existsSync(progressFile)) {
-    console.error(`${colors.magenta}Error: Progress file not found: ${progressFile}${colors.reset}`);
+  if (!fs.existsSync(planFile)) {
+    console.error(`${colors.magenta}Error: IMPLEMENTATION_PLAN.md not found: ${planFile}${colors.reset}`);
+    console.log(`${colors.dim}Run 'php artisan ralph:plan ${project}' first to create an implementation plan.${colors.reset}`);
     process.exit(1);
   }
 
   // Initialize logging
-  const logFile = initLogging(prdPath);
+  const logFile = initLogging(specPath);
 
-  const prompt = buildPrompt(prdPath);
+  const prompt = buildPrompt(specPath);
 
   // Clear screen and show header
   process.stdout.write('\x1b[2J\x1b[H');
   log(`${colors.bold}${colors.cyan}🔄 Ralph Loop${colors.reset}${VERBOSE ? ` ${colors.dim}(verbose)${colors.reset}` : ''}`);
-  log(`${colors.dim}Project: ${project} | Max iterations: ${iterations}${colors.reset}`);
+  log(`${colors.dim}Spec: ${project} | Max iterations: ${iterations}${colors.reset}`);
   log(`${colors.dim}Log file: ${logFile}${colors.reset}`);
   log(`${colors.dim}${'─'.repeat(50)}${colors.reset}`);
 
