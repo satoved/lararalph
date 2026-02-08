@@ -36,6 +36,11 @@ class LararalphServiceProvider extends PackageServiceProvider
         $this->publishes([
             __DIR__.'/../specs' => base_path('specs'),
         ], 'lararalph-specs');
+
+        // Publish .claude directory (settings, skills, .gitignore)
+        $this->publishes([
+            __DIR__.'/../.claude' => base_path('.claude'),
+        ], 'lararalph-specs');
     }
 
     /**

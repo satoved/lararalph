@@ -16,7 +16,7 @@ class AgentKillCommand extends Command
 
     public function handle()
     {
-        $liveAgentsFile = base_path('.live-agents');
+        $liveAgentsFile = base_path('.claude/.live-agents');
 
         if (! file_exists($liveAgentsFile)) {
             $this->info('No agents tracked.');

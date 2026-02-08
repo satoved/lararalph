@@ -277,7 +277,7 @@ class AgentLoop extends Command
 
     protected function trackAgent(string $screenName, string $project, string $workingPath): void
     {
-        $liveAgentsFile = base_path('.live-agents');
+        $liveAgentsFile = base_path('.claude/.live-agents');
         $agents = [];
 
         if (file_exists($liveAgentsFile)) {
@@ -289,6 +289,10 @@ class AgentLoop extends Command
             'workingPath' => $workingPath,
             'startedAt' => now()->toIso8601String(),
         ];
+
+        if (!is_dir(dirname($liveAgentsFile))) {
+            mkdir(dirname($liveAgentsFile), 0755, true);
+        }
 
         file_put_contents($liveAgentsFile, json_encode($agents, JSON_PRETTY_PRINT));
     }
