@@ -10,7 +10,7 @@ class WorktreeIdeCommand extends Command
 {
     protected $signature = 'ralph:ide {path?}';
 
-    protected $description = 'Open a git worktree in PhpStorm';
+    protected $description = 'Open a git worktree in your IDE';
 
     public function handle()
     {
@@ -32,7 +32,7 @@ class WorktreeIdeCommand extends Command
                 ->toArray();
 
             $path = search(
-                label: 'Select a worktree to open in PhpStorm',
+                label: 'Select a worktree to open in IDE',
                 options: fn (string $search) => collect($options)
                     ->filter(fn ($label) => empty($search) || str_contains(strtolower($label), strtolower($search)))
                     ->toArray(),
@@ -52,9 +52,10 @@ class WorktreeIdeCommand extends Command
             return 1;
         }
 
-        // Open in PhpStorm
-        $this->info("Opening {$path} in PhpStorm...");
-        shell_exec('open -na "PhpStorm.app" --args ' . escapeshellarg($path));
+        // Open in IDE
+        $ideCommand = config('lararalph.ide', 'open -na "PhpStorm.app" --args {path}');
+        $this->info("Opening {$path} in IDE...");
+        shell_exec(str_replace('{path}', escapeshellarg($path), $ideCommand));
 
         return 0;
     }

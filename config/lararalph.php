@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'ide' => 'open -na "PhpStorm.app" --args {path}', // or 'code {path}' for VSCode
+
     'worktree' => [
         'setup_commands' => [
             'composer install',
