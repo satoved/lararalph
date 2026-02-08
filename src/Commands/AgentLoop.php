@@ -31,37 +31,40 @@ class AgentLoop extends Command
         $this->info("Repo: {$repo}");
 
         // If no project specified, let user choose from available specs
-        if (!$project) {
+        if (! $project) {
             $project = $this->chooseProject();
-            if (!$project) {
+            if (! $project) {
                 return 1;
             }
         }
 
         // Resolve the spec path (supports both full folder name and partial match)
         $specPath = $this->resolveSpecPath($project);
-        if (!$specPath) {
+        if (! $specPath) {
             $this->error("Spec not found: {$project}");
-            $this->info("Available specs in specs/backlog/:");
+            $this->info('Available specs in specs/backlog/:');
             foreach ($this->getLocalProjects() as $spec) {
                 $this->line("  - {$spec}");
             }
+
             return 1;
         }
 
         // Validate PRD.md exists
-        $prdFile = $specPath . '/PRD.md';
-        if (!file_exists($prdFile)) {
+        $prdFile = $specPath.'/PRD.md';
+        if (! file_exists($prdFile)) {
             $this->error("PRD.md not found at: {$prdFile}");
+
             return 1;
         }
 
         // Require IMPLEMENTATION_PLAN.md to exist
-        $planFile = $specPath . '/IMPLEMENTATION_PLAN.md';
-        if (!file_exists($planFile)) {
+        $planFile = $specPath.'/IMPLEMENTATION_PLAN.md';
+        if (! file_exists($planFile)) {
             $this->error("IMPLEMENTATION_PLAN.md not found at: {$planFile}");
             $this->newLine();
             $this->info("Run 'php artisan ralph:plan {$project}' first to create an implementation plan.");
+
             return 1;
         }
 
@@ -72,8 +75,8 @@ class AgentLoop extends Command
 
         $needsWorktreeSetup = false;
         if ($useWorktree) {
-            $branchName = "agent/" . ($branch ?: $project);
-            $workingPath = getenv('HOME') . "/www/example-{$project}";
+            $branchName = 'agent/'.($branch ?: $project);
+            $workingPath = getenv('HOME')."/www/example-{$project}";
 
             $this->info("Setting up worktree for branch: {$branchName}");
             $setupResult = $this->setupWorktree($repoPath, $workingPath, $branchName);
@@ -107,13 +110,14 @@ class AgentLoop extends Command
             $script = "bash {$scriptPath} {$project} {$escapedSettings}";
             $command = "cd {$workingPath} && {$setupCmd}{$script}";
 
-            $this->info("Running single iteration...");
+            $this->info('Running single iteration...');
             passthru($command, $exitCode);
+
             return $exitCode;
         }
 
         // Screen name includes 'wt' suffix when using worktree to distinguish sessions
-        $screenName = "agent-{$project}" . ($useWorktree ? '-wt' : '');
+        $screenName = "agent-{$project}".($useWorktree ? '-wt' : '');
 
         $scriptPath = LararalphServiceProvider::binPath('ralph-loop.js');
         $script = "node {$scriptPath} {$project} {$iterations} --settings {$escapedSettings}";
@@ -130,15 +134,16 @@ class AgentLoop extends Command
             return $exitCode;
         }
 
-        $this->info("Screen session started successfully.");
+        $this->info('Screen session started successfully.');
 
         // Track in .live-agents
         $this->trackAgent($screenName, $project, $workingPath);
 
         if ($this->option('attach')) {
             $this->newLine();
-            $this->info("Attaching to screen session...");
+            $this->info('Attaching to screen session...');
             passthru($attachCmd, $exitCode);
+
             return $exitCode;
         }
 
@@ -157,11 +162,12 @@ class AgentLoop extends Command
         $worktreeExists = is_dir($worktreePath);
 
         if ($worktreeExists) {
-            $this->info("Worktree already exists, skipping setup...");
+            $this->info('Worktree already exists, skipping setup...');
+
             return false;
         }
 
-        $this->info("Creating new worktree...");
+        $this->info('Creating new worktree...');
 
         // Check if branch already exists
         $branchCheck = "cd {$repoPath} && git show-ref --verify --quiet refs/heads/{$branchName} && echo exists";
@@ -171,16 +177,16 @@ class AgentLoop extends Command
             // Use existing branch
             $commands = implode(' && ', [
                 "cd {$repoPath}",
-                "git fetch origin master",
+                'git fetch origin master',
                 "git worktree add -f {$worktreePath} {$branchName}",
                 "cd {$worktreePath}",
-                "git reset --hard origin/master",
+                'git reset --hard origin/master',
             ]);
         } else {
             // Create new branch
             $commands = implode(' && ', [
                 "cd {$repoPath}",
-                "git fetch origin master",
+                'git fetch origin master',
                 "git worktree add -b {$branchName} {$worktreePath} origin/master",
             ]);
         }
@@ -189,6 +195,7 @@ class AgentLoop extends Command
 
         if ($exitCode !== 0) {
             $this->error("Failed to create worktree. Exit code: {$exitCode}");
+
             return null;
         }
 
@@ -197,13 +204,14 @@ class AgentLoop extends Command
 
     protected function chooseProject(): ?string
     {
-        $this->info("Fetching available specs...");
+        $this->info('Fetching available specs...');
 
         $projects = $this->getLocalProjects();
 
         if (empty($projects)) {
-            $this->error("No specs found in specs/backlog/");
+            $this->error('No specs found in specs/backlog/');
             $this->info("Run '/prd' to create a new spec first.");
+
             return null;
         }
 
@@ -220,8 +228,8 @@ class AgentLoop extends Command
 
     protected function getLocalProjects(): array
     {
-        $specsDir = getcwd() . '/specs/backlog';
-        if (!is_dir($specsDir)) {
+        $specsDir = getcwd().'/specs/backlog';
+        if (! is_dir($specsDir)) {
             return [];
         }
 
@@ -233,17 +241,17 @@ class AgentLoop extends Command
 
     protected function resolveSpecPath(string $feature): ?string
     {
-        $backlogDir = getcwd() . '/specs/backlog';
-        $completeDir = getcwd() . '/specs/complete';
+        $backlogDir = getcwd().'/specs/backlog';
+        $completeDir = getcwd().'/specs/complete';
 
         // First, try exact match in backlog
-        $exactPath = $backlogDir . '/' . $feature;
+        $exactPath = $backlogDir.'/'.$feature;
         if (is_dir($exactPath)) {
             return $exactPath;
         }
 
         // Try exact match in complete
-        $exactPath = $completeDir . '/' . $feature;
+        $exactPath = $completeDir.'/'.$feature;
         if (is_dir($exactPath)) {
             return $exactPath;
         }
@@ -251,11 +259,13 @@ class AgentLoop extends Command
         // Try partial match (search for feature name after date prefix)
         if (is_dir($backlogDir)) {
             foreach (scandir($backlogDir) as $dir) {
-                if ($dir === '.' || $dir === '..') continue;
+                if ($dir === '.' || $dir === '..') {
+                    continue;
+                }
                 // Match if the feature name appears after the date prefix
                 if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $dir, $matches)) {
                     if ($matches[1] === $feature || str_contains($dir, $feature)) {
-                        return $backlogDir . '/' . $dir;
+                        return $backlogDir.'/'.$dir;
                     }
                 }
             }
@@ -263,10 +273,12 @@ class AgentLoop extends Command
 
         if (is_dir($completeDir)) {
             foreach (scandir($completeDir) as $dir) {
-                if ($dir === '.' || $dir === '..') continue;
+                if ($dir === '.' || $dir === '..') {
+                    continue;
+                }
                 if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $dir, $matches)) {
                     if ($matches[1] === $feature || str_contains($dir, $feature)) {
-                        return $completeDir . '/' . $dir;
+                        return $completeDir.'/'.$dir;
                     }
                 }
             }
@@ -290,7 +302,7 @@ class AgentLoop extends Command
             'startedAt' => now()->toIso8601String(),
         ];
 
-        if (!is_dir(dirname($liveAgentsFile))) {
+        if (! is_dir(dirname($liveAgentsFile))) {
             mkdir(dirname($liveAgentsFile), 0755, true);
         }
 

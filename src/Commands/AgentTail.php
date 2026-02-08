@@ -3,6 +3,7 @@
 namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
+
 use function Laravel\Prompts\search;
 
 class AgentTail extends Command
@@ -17,32 +18,34 @@ class AgentTail extends Command
         $session = $this->argument('session');
 
         // If no session specified, let user choose from running sessions
-        if (!$session) {
+        if (! $session) {
             $session = $this->chooseSession();
-            if (!$session) {
+            if (! $session) {
                 return 1;
             }
         }
 
         $screenName = "agent-{$session}";
         $this->info("Attaching to screen session: {$screenName}");
-        $this->info("Press Ctrl+A then D to detach without stopping the session.");
+        $this->info('Press Ctrl+A then D to detach without stopping the session.');
         $this->newLine();
 
         $command = "screen -r {$screenName}";
 
         passthru($command, $exitCode);
+
         return $exitCode;
     }
 
     protected function chooseSession(): ?string
     {
-        $this->info("Fetching running agent sessions...");
+        $this->info('Fetching running agent sessions...');
 
         $sessions = $this->getLocalSessions();
 
         if (empty($sessions)) {
-            $this->error("No running agent sessions found");
+            $this->error('No running agent sessions found');
+
             return null;
         }
 
@@ -66,7 +69,7 @@ class AgentTail extends Command
         // Extract everything after "agent-" (handles both "agent-project" and "agent-project-wt")
         $output = shell_exec("screen -ls 2>/dev/null | grep -oE 'agent-[^[:space:]]+' | sed 's/^agent-//'");
 
-        if (!$output) {
+        if (! $output) {
             return [];
         }
 

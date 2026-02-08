@@ -20,38 +20,41 @@ class AgentPlanCommand extends Command
         $force = $this->option('force');
 
         // If no feature specified, let user choose from available specs
-        if (!$feature) {
+        if (! $feature) {
             $feature = $this->chooseFeature();
-            if (!$feature) {
+            if (! $feature) {
                 return 1;
             }
         }
 
         // Resolve the spec path (supports both full folder name and partial match)
         $specPath = $this->resolveSpecPath($feature);
-        if (!$specPath) {
+        if (! $specPath) {
             $this->error("Spec not found: {$feature}");
             $this->info("Run '/prd' to create a new spec first.");
+
             return 1;
         }
 
-        $prdFile = $specPath . '/PRD.md';
-        $planFile = $specPath . '/IMPLEMENTATION_PLAN.md';
+        $prdFile = $specPath.'/PRD.md';
+        $planFile = $specPath.'/IMPLEMENTATION_PLAN.md';
 
         // Validate PRD.md exists
-        if (!file_exists($prdFile)) {
+        if (! file_exists($prdFile)) {
             $this->error("PRD.md not found at: {$prdFile}");
+
             return 1;
         }
 
         // Check if IMPLEMENTATION_PLAN.md already exists
-        if (file_exists($planFile) && !$force) {
+        if (file_exists($planFile) && ! $force) {
             $this->error("IMPLEMENTATION_PLAN.md already exists at: {$planFile}");
-            $this->info("Use --force to regenerate.");
+            $this->info('Use --force to regenerate.');
+
             return 1;
         }
 
-        $this->info("Creating implementation plan for: " . basename($specPath));
+        $this->info('Creating implementation plan for: '.basename($specPath));
         $this->newLine();
 
         // Build the planning prompt
@@ -63,13 +66,14 @@ class AgentPlanCommand extends Command
 
     protected function chooseFeature(): ?string
     {
-        $this->info("Fetching available specs...");
+        $this->info('Fetching available specs...');
 
         $specs = $this->getSpecs();
 
         if (empty($specs)) {
-            $this->error("No specs found in specs/backlog/");
+            $this->error('No specs found in specs/backlog/');
             $this->info("Run '/prd' to create a new spec first.");
+
             return null;
         }
 
@@ -86,8 +90,8 @@ class AgentPlanCommand extends Command
 
     protected function getSpecs(): array
     {
-        $specsDir = getcwd() . '/specs/backlog';
-        if (!is_dir($specsDir)) {
+        $specsDir = getcwd().'/specs/backlog';
+        if (! is_dir($specsDir)) {
             return [];
         }
 
@@ -99,17 +103,17 @@ class AgentPlanCommand extends Command
 
     protected function resolveSpecPath(string $feature): ?string
     {
-        $backlogDir = getcwd() . '/specs/backlog';
-        $completeDir = getcwd() . '/specs/complete';
+        $backlogDir = getcwd().'/specs/backlog';
+        $completeDir = getcwd().'/specs/complete';
 
         // First, try exact match in backlog
-        $exactPath = $backlogDir . '/' . $feature;
+        $exactPath = $backlogDir.'/'.$feature;
         if (is_dir($exactPath)) {
             return $exactPath;
         }
 
         // Try exact match in complete
-        $exactPath = $completeDir . '/' . $feature;
+        $exactPath = $completeDir.'/'.$feature;
         if (is_dir($exactPath)) {
             return $exactPath;
         }
@@ -117,11 +121,13 @@ class AgentPlanCommand extends Command
         // Try partial match (search for feature name after date prefix)
         if (is_dir($backlogDir)) {
             foreach (scandir($backlogDir) as $dir) {
-                if ($dir === '.' || $dir === '..') continue;
+                if ($dir === '.' || $dir === '..') {
+                    continue;
+                }
                 // Match if the feature name appears after the date prefix
                 if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $dir, $matches)) {
                     if ($matches[1] === $feature || str_contains($dir, $feature)) {
-                        return $backlogDir . '/' . $dir;
+                        return $backlogDir.'/'.$dir;
                     }
                 }
             }
@@ -129,10 +135,12 @@ class AgentPlanCommand extends Command
 
         if (is_dir($completeDir)) {
             foreach (scandir($completeDir) as $dir) {
-                if ($dir === '.' || $dir === '..') continue;
+                if ($dir === '.' || $dir === '..') {
+                    continue;
+                }
                 if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $dir, $matches)) {
                     if ($matches[1] === $feature || str_contains($dir, $feature)) {
-                        return $completeDir . '/' . $dir;
+                        return $completeDir.'/'.$dir;
                     }
                 }
             }
@@ -143,8 +151,8 @@ class AgentPlanCommand extends Command
 
     protected function buildPlanningPrompt(string $specPath): string
     {
-        $prdFile = $specPath . '/PRD.md';
-        $planFile = $specPath . '/IMPLEMENTATION_PLAN.md';
+        $prdFile = $specPath.'/PRD.md';
+        $planFile = $specPath.'/IMPLEMENTATION_PLAN.md';
 
         return <<<PROMPT
 @{$prdFile}
@@ -230,7 +238,7 @@ PROMPT;
 
     protected function runClaude(string $prompt, string $specPath): int
     {
-        $this->info("Running Claude to analyze codebase and create plan...");
+        $this->info('Running Claude to analyze codebase and create plan...');
         $this->newLine();
 
         $settings = config('lararalph.claude.settings', []);
@@ -246,12 +254,12 @@ PROMPT;
 
         if ($exitCode === 0) {
             $this->newLine();
-            $planFile = $specPath . '/IMPLEMENTATION_PLAN.md';
+            $planFile = $specPath.'/IMPLEMENTATION_PLAN.md';
             if (file_exists($planFile)) {
-                $this->info("Implementation plan created: " . $planFile);
+                $this->info('Implementation plan created: '.$planFile);
             } else {
-                $this->warn("Claude completed but IMPLEMENTATION_PLAN.md was not created.");
-                $this->info("You may need to run the command again or create it manually.");
+                $this->warn('Claude completed but IMPLEMENTATION_PLAN.md was not created.');
+                $this->info('You may need to run the command again or create it manually.');
             }
         }
 

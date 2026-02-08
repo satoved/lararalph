@@ -18,6 +18,7 @@ class AgentStatusCommand extends Command
 
         if (! file_exists($liveAgentsFile)) {
             $this->info('No agents tracked yet.');
+
             return 0;
         }
 
@@ -25,6 +26,7 @@ class AgentStatusCommand extends Command
 
         if (empty($agents)) {
             $this->info('No agents tracked.');
+
             return 0;
         }
 
@@ -38,7 +40,7 @@ class AgentStatusCommand extends Command
             $isRunning = in_array($screenName, $localScreens);
 
             $startedAt = Carbon::parse($agent['startedAt']);
-            $duration = $startedAt->locale('en')->diffForHumans(syntax: Carbon::DIFF_ABSOLUTE) . ' ago';
+            $duration = $startedAt->locale('en')->diffForHumans(syntax: Carbon::DIFF_ABSOLUTE).' ago';
 
             $status = $isRunning ? '<fg=yellow>running</>' : '<fg=green>complete</>';
 

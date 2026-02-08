@@ -20,6 +20,7 @@ class AgentKillCommand extends Command
 
         if (! file_exists($liveAgentsFile)) {
             $this->info('No agents tracked.');
+
             return 0;
         }
 
@@ -27,6 +28,7 @@ class AgentKillCommand extends Command
 
         if (empty($agents)) {
             $this->info('No agents tracked.');
+
             return 0;
         }
 
@@ -52,6 +54,7 @@ class AgentKillCommand extends Command
 
         if (empty($runningAgents)) {
             $this->info('No running agents found.');
+
             return 0;
         }
 
@@ -60,6 +63,7 @@ class AgentKillCommand extends Command
 
         if ($screenName && ! isset($runningAgents[$screenName])) {
             $this->error("Agent '{$screenName}' not found or not running.");
+
             return 1;
         }
 
@@ -85,6 +89,7 @@ class AgentKillCommand extends Command
 
         if (empty($screenName)) {
             $this->info('No agent selected.');
+
             return 0;
         }
 
@@ -92,6 +97,7 @@ class AgentKillCommand extends Command
 
         if (! confirm("Kill agent '{$agent['project']}'?", default: false)) {
             $this->info('Cancelled.');
+
             return 0;
         }
 

@@ -15,17 +15,19 @@ class WorktreeSetupCommand extends Command
     public function handle()
     {
         $currentDir = basename(base_path());
-        $mainEnvPath = dirname(base_path()) . '/example/.env';
+        $mainEnvPath = dirname(base_path()).'/example/.env';
 
         // Check if we're in the main directory
         if ($currentDir === 'example') {
             $this->error('This command should be run from a worktree, not the main directory');
+
             return 1;
         }
 
         // Check if main .env exists
         if (! file_exists($mainEnvPath)) {
             $this->error("Main .env not found at: {$mainEnvPath}");
+
             return 1;
         }
 
@@ -43,7 +45,7 @@ class WorktreeSetupCommand extends Command
         $commands = config('lararalph.worktree.setup_commands', []);
         foreach ($commands as $command) {
             spin(
-                fn () => shell_exec($command . ' 2>&1'),
+                fn () => shell_exec($command.' 2>&1'),
                 "Running {$command}..."
             );
             $this->info("Running {$command} complete");

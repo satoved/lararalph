@@ -22,6 +22,7 @@ class WorktreeIdeCommand extends Command
 
         if (empty($worktrees)) {
             $this->error('No worktrees found');
+
             return 1;
         }
 
@@ -43,12 +44,14 @@ class WorktreeIdeCommand extends Command
 
         if (empty($path)) {
             $this->error('No worktree selected');
+
             return 1;
         }
 
         // Verify the path exists
         if (! is_dir($path)) {
             $this->error("Directory not found: {$path}");
+
             return 1;
         }
 
@@ -77,6 +80,7 @@ class WorktreeIdeCommand extends Command
                     $worktrees[] = $current;
                 }
                 $current = [];
+
                 continue;
             }
 
