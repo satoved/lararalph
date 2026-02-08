@@ -31,7 +31,7 @@ class AgentPlanCommand extends Command
         $specPath = $this->resolveSpecPath($feature);
         if (! $specPath) {
             $this->error("Spec not found: {$feature}");
-            $this->info("Run '/prd' to create a new spec first.");
+            $this->info("Use '/prd' skill inside Claude to create a new spec first.");
 
             return 1;
         }

@@ -5,15 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/satoved/lararalph/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/satoved/lararalph/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/satoved/lararalph.svg?style=flat-square)](https://packagist.org/packages/satoved/lararalph)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/lararalph.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/lararalph)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+Agentic Claude Code loops for Laravel. Provides Artisan commands to run Claude Code agents in autonomous loops, manage worktrees for parallel development, and scaffold specs-driven workflows.
 
 ## Installation
 
@@ -23,38 +15,53 @@ You can install the package via composer:
 composer require satoved/lararalph
 ```
 
-You can publish and run the migrations with:
+### Publish assets
 
-```bash
-php artisan vendor:publish --tag="lararalph-migrations"
-php artisan migrate
-```
-
-You can publish the config file with:
+Publish the config file and specs/claude assets in one go:
 
 ```bash
 php artisan vendor:publish --tag="lararalph-config"
+php artisan vendor:publish --tag="lararalph-specs"
 ```
 
-This is the contents of the published config file:
+**Config** (`config/lararalph.php`) -- IDE, worktree setup commands, and Claude settings:
 
 ```php
 return [
+    'ide' => 'open -na "PhpStorm.app" --args {path}', // or 'code {path}' for VSCode
+
+    'worktree' => [
+        'setup_commands' => ['composer install', 'npm install', 'herd secure'],
+    ],
+
+    'claude' => [
+        'settings' => [
+            'defaultMode' => 'acceptEdits',
+            'enableAllProjectMcpServers' => true,
+            'sandbox' => [
+                'enabled' => true,
+                'autoAllowBashIfSandboxed' => true,
+            ],
+        ],
+    ],
 ];
 ```
 
-Optionally, you can publish the views using
+**Specs** (`specs/`) -- directory structure for backlog/complete spec files used by agent loops.
 
-```bash
-php artisan vendor:publish --tag="lararalph-views"
-```
+**.claude/** -- Claude Code project settings and skills (e.g. PRD skill).
 
-## Usage
+### Available commands
 
-```php
-$lararalph = new Satoved\Lararalph();
-echo $lararalph->echoPhrase('Hello, Satoved!');
-```
+| Command | Description |
+|---|---|
+| `php artisan agent:loop` | Run a Claude Code agent in an autonomous loop |
+| `php artisan agent:plan` | Plan an agent task |
+| `php artisan agent:status` | Show status of running agents |
+| `php artisan agent:kill` | Kill a running agent |
+| `php artisan agent:tail` | Tail agent output |
+| `php artisan worktree:setup` | Set up a git worktree for parallel development |
+| `php artisan worktree:ide` | Open a worktree in your configured IDE |
 
 ## Testing
 
