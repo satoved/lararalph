@@ -8,7 +8,7 @@ use function Laravel\Prompts\spin;
 
 class WorktreeSetupCommand extends Command
 {
-    protected $signature = 'ralph:setup {--skip-composer : Skip composer install} {--skip-yarn : Skip yarn install}';
+    protected $signature = 'ralph:setup';
 
     protected $description = 'Setup a git worktree with .env, composer, and yarn';
 
@@ -39,30 +39,15 @@ class WorktreeSetupCommand extends Command
         file_put_contents(base_path('.env'), $envContent);
         $this->info("Updated APP_URL to use {$currentDir}.test");
 
-        // Run composer install
-        if (! $this->option('skip-composer')) {
+        // Run configured setup commands
+        $commands = config('lararalph.worktree.setup_commands', []);
+        foreach ($commands as $command) {
             spin(
-                fn () => shell_exec('composer install 2>&1'),
-                'Running composer install...'
+                fn () => shell_exec($command . ' 2>&1'),
+                "Running {$command}..."
             );
-            $this->info('Composer install complete');
+            $this->info("Running {$command} complete");
         }
-
-        // Run yarn install
-        if (! $this->option('skip-yarn')) {
-            spin(
-                fn () => shell_exec('yarn install 2>&1'),
-                'Running yarn install...'
-            );
-            $this->info('Yarn install complete');
-        }
-
-        // Run valet secure, make sure it's in the sudoers so we don't get prompted for password
-        spin(
-            fn () => shell_exec('valet secure 2>&1'),
-            'Running valet secure...'
-        );
-        $this->info('Valet secure complete');
 
         $this->newLine();
         $this->info('Worktree setup complete!');
