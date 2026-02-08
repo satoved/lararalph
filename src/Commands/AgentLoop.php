@@ -98,9 +98,13 @@ class AgentLoop extends Command
             ? 'composer install && php artisan worktree:setup --skip-composer && '
             : '';
 
+        $settings = config('lararalph.claude.settings', []);
+        $settingsJson = json_encode($settings, JSON_UNESCAPED_SLASHES);
+        $escapedSettings = escapeshellarg($settingsJson);
+
         if ($once) {
             $scriptPath = LararalphServiceProvider::binPath('ralph-once.sh');
-            $script = "bash {$scriptPath} {$project}";
+            $script = "bash {$scriptPath} {$project} {$escapedSettings}";
             $command = "cd {$workingPath} && {$setupCmd}{$script}";
 
             $this->info("Running single iteration...");
@@ -112,7 +116,7 @@ class AgentLoop extends Command
         $screenName = "agent-{$project}" . ($useWorktree ? '-wt' : '');
 
         $scriptPath = LararalphServiceProvider::binPath('ralph-loop.js');
-        $script = "node {$scriptPath} {$project} {$iterations}";
+        $script = "node {$scriptPath} {$project} {$iterations} --settings {$escapedSettings}";
         $innerCmd = "cd {$workingPath} && {$setupCmd}{$script}";
 
         $command = "screen -dmS {$screenName} zsh -ic '{$innerCmd}'";

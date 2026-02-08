@@ -4,10 +4,22 @@ return [
     'ide' => 'open -na "PhpStorm.app" --args {path}', // or 'code {path}' for VSCode
 
     'worktree' => [
-        'setup_commands' => [
-            'composer install',
-            'npm install', // or 'yarn install'...
-            'herd secure', // or 'valet secure'...
+        'setup_commands' => array_filter(
+            explode(
+                ',',
+                env('LARARALPH_WORKTREE_SETUP_COMMANDS', 'composer install,npm install,herd secure') // or 'composer install,yarn install,valet secure'
+            )
+        ),
+    ],
+
+    'claude' => [
+        'settings' => [
+            'defaultMode' => 'acceptEdits', // or 'dangerouslySkipPermissions'
+            'enableAllProjectMcpServers' => true,
+            'sandbox' => [
+                'enabled' => true,
+                'autoAllowBashIfSandboxed' => true,
+            ],
         ],
     ],
 ];

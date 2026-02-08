@@ -92,7 +92,16 @@ if [ ! -f "$PLAN_FILE" ]; then
     exit 1
 fi
 
-claude --permission-mode acceptEdits "@$PRD_FILE @$PLAN_FILE \
+CLAUDE_SETTINGS="${2:-}"
+
+CLAUDE_ARGS=()
+if [ -n "$CLAUDE_SETTINGS" ]; then
+    CLAUDE_ARGS+=(--settings "$CLAUDE_SETTINGS")
+else
+    CLAUDE_ARGS+=(--permission-mode acceptEdits)
+fi
+
+claude "${CLAUDE_ARGS[@]}" "@$PRD_FILE @$PLAN_FILE \
 1. Read the PRD and implementation plan. \
 2. Find the next unchecked task in IMPLEMENTATION_PLAN.md and implement it. \
 3. Commit your changes. \

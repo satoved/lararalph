@@ -233,8 +233,12 @@ PROMPT;
         $this->info("Running Claude to analyze codebase and create plan...");
         $this->newLine();
 
+        $settings = config('lararalph.claude.settings', []);
+        $settingsJson = json_encode($settings, JSON_UNESCAPED_SLASHES);
+
         $command = sprintf(
-            'claude --permission-mode acceptEdits -p %s',
+            'claude --settings %s -p %s',
+            escapeshellarg($settingsJson),
             escapeshellarg($prompt)
         );
 

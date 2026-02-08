@@ -2,13 +2,14 @@
 set -e
 
 if [ -z "$1" ] || [ -z "$2" ]; then
-    echo "Usage: $0 <spec-name> <iterations>"
+    echo "Usage: $0 <spec-name> <iterations> [claude-settings-json]"
     echo "Example: $0 2024-01-15-feature-name 20"
     exit 1
 fi
 
 PROJECT="$1"
 ITERATIONS="$2"
+CLAUDE_SETTINGS="${3:-}"
 
 # Resolve spec path - checks backlog first, then complete
 # Supports both exact match and partial match (feature name without date prefix)
@@ -81,8 +82,15 @@ if [ ! -f "$PLAN_FILE" ]; then
     exit 1
 fi
 
+CLAUDE_ARGS=()
+if [ -n "$CLAUDE_SETTINGS" ]; then
+    CLAUDE_ARGS+=(--settings "$CLAUDE_SETTINGS")
+else
+    CLAUDE_ARGS+=(--permission-mode acceptEdits)
+fi
+
 for ((i=1; i<=$ITERATIONS; i++)); do
-  result=$(claude --permission-mode acceptEdits -p "@$PRD_FILE @$PLAN_FILE \
+  result=$(claude "${CLAUDE_ARGS[@]}" -p "@$PRD_FILE @$PLAN_FILE \
   1. Find the highest-priority unchecked task in IMPLEMENTATION_PLAN.md and implement it. \
   2. Run your tests and type checks. \
   3. Mark the task as complete in IMPLEMENTATION_PLAN.md by checking its checkbox. \

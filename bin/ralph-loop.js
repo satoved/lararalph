@@ -77,7 +77,20 @@ const DEFAULT_ITERATIONS = 10;
 
 const args = process.argv.slice(2);
 const VERBOSE = args.includes('--verbose') || args.includes('-v');
-const filteredArgs = args.filter(a => a !== '--verbose' && a !== '-v');
+
+// Parse --settings flag
+let CLAUDE_SETTINGS = null;
+const settingsIndex = args.indexOf('--settings');
+if (settingsIndex !== -1 && args[settingsIndex + 1]) {
+  CLAUDE_SETTINGS = args[settingsIndex + 1];
+}
+
+const filteredArgs = args.filter((a, i) => {
+  if (a === '--verbose' || a === '-v') return false;
+  if (a === '--settings') return false;
+  if (i > 0 && args[i - 1] === '--settings') return false;
+  return true;
+});
 
 // Resolve spec path - checks backlog first, then complete
 // Supports both exact match and partial match (feature name without date prefix)
@@ -354,12 +367,11 @@ async function runClaudeStreaming(prompt) {
     let fullOutput = '';
     let isComplete = false;
 
-    const claude = spawn('claude', [
-      '--permission-mode', 'acceptEdits',
-      '-p', prompt,
-      '--verbose',
-      '--output-format', 'stream-json'
-    ], {
+    const claudeArgs = CLAUDE_SETTINGS
+      ? ['--settings', CLAUDE_SETTINGS, '-p', prompt, '--verbose', '--output-format', 'stream-json']
+      : ['--permission-mode', 'acceptEdits', '-p', prompt, '--verbose', '--output-format', 'stream-json'];
+
+    const claude = spawn('claude', claudeArgs, {
       stdio: ['inherit', 'pipe', 'pipe']
     });
 

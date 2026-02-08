@@ -1,8 +1,2 @@
 {
-    "defaultMode": "acceptEdits",
-    "enableAllProjectMcpServers": true,
-    "sandbox": {
-        "enabled": true,
-        "autoAllowBashIfSandboxed": true
-    }
 }
