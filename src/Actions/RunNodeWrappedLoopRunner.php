@@ -13,7 +13,6 @@ class RunNodeWrappedLoopRunner implements LoopRunner
     {
         $escapedPrompt = escapeshellarg($prompt);
         $scriptPath = LararalphServiceProvider::binPath('ralph-loop.js');
-        $workingDirectory = $workingDirectory ?? base_path();
 
         $command = "cd {$workingDirectory} && RALPH_PROMPT={$escapedPrompt} node {$scriptPath} {$spec->name} {$maxIterations}";
 
