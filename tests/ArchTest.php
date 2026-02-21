@@ -1,7 +1,7 @@
 <?php
 
 use Satoved\Lararalph\Contracts\SpecRepository;
-use Satoved\Lararalph\Worktree\Steps\WorktreeSetupStep;
+use Satoved\Lararalph\Contracts\WorktreeSetupStep;
 
 arch('it will not use debugging functions')
     ->expect(['dd', 'dump', 'ray'])

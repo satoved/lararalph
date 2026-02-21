@@ -1,10 +1,10 @@
 <?php
 
-use Satoved\Lararalph\Worktree\Steps\CopyEnvFile;
-use Satoved\Lararalph\Worktree\Steps\OpenInPHPStorm;
-use Satoved\Lararalph\Worktree\Steps\RunHerdSecure;
-use Satoved\Lararalph\Worktree\Steps\RunInstallComposer;
-use Satoved\Lararalph\Worktree\Steps\RunInstallNpm;
+use Satoved\Lararalph\Worktree\Setup\CopyEnvFile;
+use Satoved\Lararalph\Worktree\Setup\OpenInPHPStorm;
+use Satoved\Lararalph\Worktree\Setup\RunHerdSecure;
+use Satoved\Lararalph\Worktree\Setup\RunInstallComposer;
+use Satoved\Lararalph\Worktree\Setup\RunInstallNpm;
 
 return [
     'worktree_setup' => [

@@ -1,6 +1,6 @@
 <?php
 
-use Satoved\Lararalph\Worktree\Steps\WorktreeSetupStep;
+use Satoved\Lararalph\Contracts\WorktreeSetupStep;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 beforeEach(function () {

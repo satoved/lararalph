@@ -3,7 +3,7 @@
 namespace Satoved\Lararalph\Worktree;
 
 use RuntimeException;
-use Satoved\Lararalph\Worktree\Steps\WorktreeSetupStep;
+use Satoved\Lararalph\Contracts\WorktreeSetupStep;
 
 class WorktreeCreator
 {

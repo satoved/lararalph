@@ -1,6 +1,8 @@
 <?php
 
-namespace Satoved\Lararalph\Worktree\Steps;
+namespace Satoved\Lararalph\Worktree\Setup;
+
+use Satoved\Lararalph\Contracts\WorktreeSetupStep;
 
 class RunInstallNpm implements WorktreeSetupStep
 {

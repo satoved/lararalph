@@ -1,6 +1,6 @@
 <?php
 
-use Satoved\Lararalph\Worktree\Steps\CopyEnvFile;
+use Satoved\Lararalph\Worktree\Setup\CopyEnvFile;
 
 beforeEach(function () {
     $this->sourceDir = sys_get_temp_dir().'/lararalph-env-source-'.uniqid();

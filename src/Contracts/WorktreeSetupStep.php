@@ -1,6 +1,6 @@
 <?php
 
-namespace Satoved\Lararalph\Worktree\Steps;
+namespace Satoved\Lararalph\Contracts;
 
 interface WorktreeSetupStep
 {
