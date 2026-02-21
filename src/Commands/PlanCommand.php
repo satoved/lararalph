@@ -35,10 +35,8 @@ class PlanCommand extends Command
             return 1;
         }
 
-        $planFile = $resolved->absoluteFolderPath.'/IMPLEMENTATION_PLAN.md';
-
-        if (file_exists($planFile) && ! $this->option('force')) {
-            $this->error("IMPLEMENTATION_PLAN.md already exists at: {$planFile}");
+        if (file_exists($resolved->absolutePlanFilePath) && ! $this->option('force')) {
+            $this->error("IMPLEMENTATION_PLAN.md already exists at: {$resolved->absolutePlanFilePath}");
             $this->info('Use --force to regenerate.');
 
             return 1;
@@ -57,15 +55,15 @@ class PlanCommand extends Command
 
         $prompt = view('lararalph::prompts.plan', [
             'prdFilePath' => $resolved->absolutePrdFilePath,
-            'planFilePath' => file_exists($planFile) ? $planFile : null,
+            'planFilePath' => file_exists($resolved->absolutePlanFilePath) ? $resolved->absolutePlanFilePath : null,
         ])->render();
 
         $exitCode = $runner->run($resolved->name, $prompt, 1, $cwd);
 
         if ($exitCode === 0) {
             $this->newLine();
-            if (file_exists($planFile)) {
-                $this->info('Implementation plan created: '.$planFile);
+            if (file_exists($resolved->absolutePlanFilePath)) {
+                $this->info('Implementation plan created: '.$resolved->absolutePlanFilePath);
             } else {
                 $this->warn('Claude completed but IMPLEMENTATION_PLAN.md was not created.');
                 $this->info('You may need to run the command again or create it manually.');

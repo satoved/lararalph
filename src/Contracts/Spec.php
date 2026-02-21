@@ -8,5 +8,6 @@ final readonly class Spec
         public string $name,
         public string $absoluteFolderPath,
         public string $absolutePrdFilePath,
+        public string $absolutePlanFilePath,
     ) {}
 }

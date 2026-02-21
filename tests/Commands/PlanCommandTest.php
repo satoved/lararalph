@@ -14,6 +14,7 @@ beforeEach(function () {
         name: 'test-spec',
         absoluteFolderPath: $this->specDir,
         absolutePrdFilePath: $this->specDir.'/PRD.md',
+        absolutePlanFilePath: $this->specDir.'/IMPLEMENTATION_PLAN.md',
     );
 });
 

@@ -35,9 +35,8 @@ class BuildCommand extends Command
             return 1;
         }
 
-        $planFile = $resolved->absoluteFolderPath.'/IMPLEMENTATION_PLAN.md';
-        if (! file_exists($planFile)) {
-            $this->error("IMPLEMENTATION_PLAN.md not found at: {$planFile}");
+        if (! file_exists($resolved->absolutePlanFilePath)) {
+            $this->error("IMPLEMENTATION_PLAN.md not found at: {$resolved->absolutePlanFilePath}");
             $this->newLine();
             $this->info("Run 'php artisan ralph:plan {$resolved->name}' first to create an implementation plan.");
 
@@ -57,7 +56,7 @@ class BuildCommand extends Command
 
         $prompt = view('lararalph::prompts.build', [
             'prdFilePath' => $resolved->absolutePrdFilePath,
-            'planFilePath' => $planFile,
+            'planFilePath' => $resolved->absolutePlanFilePath,
         ])->render();
 
         return $runner->run($resolved->name, $prompt, (int) $this->option('iterations'), $cwd);

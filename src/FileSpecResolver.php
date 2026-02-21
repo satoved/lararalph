@@ -56,6 +56,7 @@ class FileSpecResolver implements SpecResolver
             name: basename($specPath),
             absoluteFolderPath: $specPath,
             absolutePrdFilePath: $prdFile,
+            absolutePlanFilePath: $specPath.'/IMPLEMENTATION_PLAN.md',
         );
     }
 

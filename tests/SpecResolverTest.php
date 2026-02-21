@@ -68,7 +68,8 @@ describe('resolve', function () {
         expect($result)->toBeInstanceOf(Spec::class)
             ->and($result->name)->toBe('my-feature')
             ->and($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/backlog/my-feature')
-            ->and($result->absolutePrdFilePath)->toBe($this->tempDir.'/specs/backlog/my-feature/PRD.md');
+            ->and($result->absolutePrdFilePath)->toBe($this->tempDir.'/specs/backlog/my-feature/PRD.md')
+            ->and($result->absolutePlanFilePath)->toBe($this->tempDir.'/specs/backlog/my-feature/IMPLEMENTATION_PLAN.md');
     });
 
     it('resolves exact match in complete', function () {
