@@ -39,7 +39,8 @@ class AgentLoop extends Command
         $needsWorktreeSetup = false;
         if ($useWorktree) {
             $branchName = 'agent/'.($branch ?: $project);
-            $workingPath = getenv('HOME')."/www/example-{$project}";
+            $repoName = basename($repoPath);
+            $workingPath = dirname($repoPath)."/{$repoName}-{$project}";
 
             $this->info("Setting up worktree for branch: {$branchName}");
             $setupResult = $this->setupWorktree($repoPath, $workingPath, $branchName);
@@ -58,9 +59,13 @@ class AgentLoop extends Command
 
     protected function runCommandAgent(string $project, int $iterations, bool $once, string $repoPath, string $workingPath, bool $useWorktree, bool $needsWorktreeSetup, string $prompt): int
     {
-        $setupCmd = $needsWorktreeSetup
-            ? 'composer install && php artisan worktree:setup --skip-composer && '
-            : '';
+        $setupCmd = '';
+        if ($needsWorktreeSetup) {
+            $commands = config('lararalph.worktree.setup_commands', []);
+            if (! empty($commands)) {
+                $setupCmd = implode(' && ', $commands).' && ';
+            }
+        }
 
         $escapedPrompt = escapeshellarg($prompt);
 
@@ -116,9 +121,7 @@ class AgentLoop extends Command
      */
     protected function setupWorktree(string $repoPath, string $worktreePath, string $branchName): ?bool
     {
-        $worktreeExists = is_dir($worktreePath);
-
-        if ($worktreeExists) {
+        if (is_dir($worktreePath)) {
             $this->info('Worktree already exists, skipping setup...');
 
             return false;
@@ -126,31 +129,34 @@ class AgentLoop extends Command
 
         $this->info('Creating new worktree...');
 
-        $branchCheck = "cd {$repoPath} && git show-ref --verify --quiet refs/heads/{$branchName} && echo exists";
-        $branchExists = trim(shell_exec($branchCheck)) === 'exists';
-
-        if ($branchExists) {
-            $commands = implode(' && ', [
-                "cd {$repoPath}",
-                'git fetch origin master',
-                "git worktree add -f {$worktreePath} {$branchName}",
-                "cd {$worktreePath}",
-                'git reset --hard origin/master',
-            ]);
-        } else {
-            $commands = implode(' && ', [
-                "cd {$repoPath}",
-                'git fetch origin master',
-                "git worktree add -b {$branchName} {$worktreePath} origin/master",
-            ]);
+        // Detect default branch
+        $defaultBranch = trim(shell_exec("cd {$repoPath} && git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'"));
+        if (! $defaultBranch) {
+            $defaultBranch = 'main';
         }
 
-        passthru($commands, $exitCode);
+        $command = "cd {$repoPath} && git worktree add -b {$branchName} {$worktreePath} {$defaultBranch}";
+        passthru($command, $exitCode);
 
         if ($exitCode !== 0) {
             $this->error("Failed to create worktree. Exit code: {$exitCode}");
 
             return null;
+        }
+
+        // Copy .env from original repo to worktree
+        $envSource = $repoPath.'/.env';
+        if (file_exists($envSource)) {
+            $envContent = file_get_contents($envSource);
+
+            $originalDir = basename($repoPath);
+            $worktreeDir = basename($worktreePath);
+            $envContent = str_replace("{$originalDir}.test", "{$worktreeDir}.test", $envContent);
+
+            file_put_contents($worktreePath.'/.env', $envContent);
+            $this->info("Copied .env (updated URL to {$worktreeDir}.test)");
+        } else {
+            $this->warn('No .env found in original repo, skipping copy.');
         }
 
         return true;

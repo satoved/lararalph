@@ -2,14 +2,11 @@
 
 namespace Satoved\Lararalph;
 
-use Satoved\Lararalph\Commands\BuildCommand;
-use Satoved\Lararalph\Commands\AgentKillCommand;
 use Satoved\Lararalph\Commands\AgentLoop;
-use Satoved\Lararalph\Commands\PlanCommand;
-use Satoved\Lararalph\Commands\AgentStatusCommand;
-use Satoved\Lararalph\Commands\AgentTail;
+use Satoved\Lararalph\Commands\BuildCommand;
 use Satoved\Lararalph\Commands\IdeCommand;
-use Satoved\Lararalph\Commands\WorktreeCommand;
+use Satoved\Lararalph\Commands\PlanCommand;
+use Satoved\Lararalph\Commands\WorktreeRemoveCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -23,13 +20,10 @@ class LararalphServiceProvider extends PackageServiceProvider
             ->hasViews()
             ->hasCommands([
                 BuildCommand::class,
-                AgentKillCommand::class,
                 AgentLoop::class,
                 PlanCommand::class,
-                AgentStatusCommand::class,
-                AgentTail::class,
                 IdeCommand::class,
-                WorktreeCommand::class,
+                WorktreeRemoveCommand::class,
             ]);
     }
 
