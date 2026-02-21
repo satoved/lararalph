@@ -42,31 +42,31 @@ trait ResolvesSpecs
         ));
     }
 
-    protected function resolveSpecPath(string $feature): ?string
+    protected function resolveSpecPath(string $spec): ?string
     {
         $backlogDir = getcwd().'/specs/backlog';
         $completeDir = getcwd().'/specs/complete';
 
         // First, try exact match in backlog
-        $exactPath = $backlogDir.'/'.$feature;
+        $exactPath = $backlogDir.'/'.$spec;
         if (is_dir($exactPath)) {
             return $exactPath;
         }
 
         // Try exact match in complete
-        $exactPath = $completeDir.'/'.$feature;
+        $exactPath = $completeDir.'/'.$spec;
         if (is_dir($exactPath)) {
             return $exactPath;
         }
 
-        // Try partial match (search for feature name after date prefix)
+        // Try partial match (search for spec name after date prefix)
         if (is_dir($backlogDir)) {
             foreach (scandir($backlogDir) as $dir) {
                 if ($dir === '.' || $dir === '..') {
                     continue;
                 }
                 if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $dir, $matches)) {
-                    if ($matches[1] === $feature || str_contains($dir, $feature)) {
+                    if ($matches[1] === $spec || str_contains($dir, $spec)) {
                         return $backlogDir.'/'.$dir;
                     }
                 }
@@ -79,7 +79,7 @@ trait ResolvesSpecs
                     continue;
                 }
                 if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $dir, $matches)) {
-                    if ($matches[1] === $feature || str_contains($dir, $feature)) {
+                    if ($matches[1] === $spec || str_contains($dir, $spec)) {
                         return $completeDir.'/'.$dir;
                     }
                 }

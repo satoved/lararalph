@@ -26,7 +26,7 @@ function initLogging(prdPath) {
   // Write header
   logStream.write(`Ralph Loop Log\n`);
   logStream.write(`==============\n`);
-  logStream.write(`Feature Path: ${prdPath}\n`);
+  logStream.write(`Spec Path: ${prdPath}\n`);
   logStream.write(`Started: ${new Date().toISOString()}\n`);
   logStream.write(`\n`);
 
@@ -90,15 +90,15 @@ const filteredArgs = args.filter((a) => {
 
 function getConfig() {
   if (filteredArgs.length < 1) {
-    console.error(`${colors.magenta}Usage: ralph-loop.js <project> [iterations]${colors.reset}`);
+    console.error(`${colors.magenta}Usage: ralph-loop.js <spec> [iterations]${colors.reset}`);
     console.log(`${colors.dim}This script should be invoked via ralph:loop, ralph:build, or ralph:plan.${colors.reset}`);
     process.exit(1);
   }
 
-  const project = filteredArgs[0];
+  const spec = filteredArgs[0];
   const iterations = filteredArgs[1] ? parseInt(filteredArgs[1], 10) : DEFAULT_ITERATIONS;
 
-  return { project, iterations };
+  return { spec, iterations };
 }
 
 function buildPrompt() {
@@ -276,17 +276,17 @@ async function runClaudeStreaming(prompt) {
 }
 
 async function main() {
-  const { project, iterations } = getConfig();
+  const { spec, iterations } = getConfig();
   const prompt = buildPrompt();
 
-  // Initialize logging in project's spec directory if it exists
-  const specPath = path.join(SPECS_BACKLOG_DIR, project);
+  // Initialize logging in spec directory if it exists
+  const specPath = path.join(SPECS_BACKLOG_DIR, spec);
   const logFile = fs.existsSync(specPath) ? initLogging(specPath) : null;
 
   // Clear screen and show header
   process.stdout.write('\x1b[2J\x1b[H');
   log(`${colors.bold}${colors.cyan}🔄 Ralph Loop${colors.reset}${VERBOSE ? ` ${colors.dim}(verbose)${colors.reset}` : ''}`);
-  log(`${colors.dim}Project: ${project} | Max iterations: ${iterations}${colors.reset}`);
+  log(`${colors.dim}Spec: ${spec} | Max iterations: ${iterations}${colors.reset}`);
   if (logFile) {
     log(`${colors.dim}Log file: ${logFile}${colors.reset}`);
   }

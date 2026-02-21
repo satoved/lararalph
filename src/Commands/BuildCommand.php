@@ -10,10 +10,10 @@ class BuildCommand extends Command
     use ResolvesSpecs;
 
     protected $signature = 'ralph:build
-                            {project? : The project name for the PRD (interactive if not provided)}
+                            {spec? : The spec name to build (interactive if not provided)}
                             {iterations? : Number of iterations to run (default: 30, ignored with --once)}
                             {--once : Run a single iteration without detaching}
-                            {--branch= : Use a custom branch name (default: agent/<project>)}
+                            {--branch= : Use a custom branch name (default: agent/<spec>)}
                             {--worktree : Run in a separate worktree instead of current directory}
                             {--attach : Attach to the screen session after starting}';
 
@@ -21,18 +21,18 @@ class BuildCommand extends Command
 
     public function handle()
     {
-        $project = $this->argument('project');
+        $spec = $this->argument('spec');
 
-        if (! $project) {
-            $project = $this->chooseSpec();
-            if (! $project) {
+        if (! $spec) {
+            $spec = $this->chooseSpec();
+            if (! $spec) {
                 return 1;
             }
         }
 
-        $specPath = $this->resolveSpecPath($project);
+        $specPath = $this->resolveSpecPath($spec);
         if (! $specPath) {
-            $this->error("Spec not found: {$project}");
+            $this->error("Spec not found: {$spec}");
             $this->info('Available specs in specs/backlog/:');
             foreach ($this->getBacklogSpecs() as $spec) {
                 $this->line("  - {$spec}");
@@ -53,14 +53,14 @@ class BuildCommand extends Command
         if (! file_exists($planFile)) {
             $this->error("IMPLEMENTATION_PLAN.md not found at: {$planFile}");
             $this->newLine();
-            $this->info("Run 'php artisan ralph:plan {$project}' first to create an implementation plan.");
+            $this->info("Run 'php artisan ralph:plan {$spec}' first to create an implementation plan.");
 
             return 1;
         }
 
-        $project = basename($specPath);
+        $spec = basename($specPath);
 
-        $this->info("Building: {$project}");
+        $this->info("Building: {$spec}");
         $this->newLine();
 
         $prompt = view('lararalph::prompts.build', [
@@ -69,7 +69,7 @@ class BuildCommand extends Command
         ])->render();
 
         $args = [
-            'project' => $project,
+            'spec' => $spec,
             '--prompt' => $prompt,
         ];
 

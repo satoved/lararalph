@@ -155,8 +155,8 @@ Published to `.claude/skills/prd/SKILL.md`. Edit to match your team's PRD templa
 
 | Command                  | Description |
 |--------------------------|---|
-| `ralph:plan {feature?}`  | Gap analysis: specs vs codebase → `IMPLEMENTATION_PLAN.md` |
-| `ralph:build {project?}` | Pick task, implement, test, commit, loop |
+| `ralph:plan {spec?}`     | Gap analysis: specs vs codebase → `IMPLEMENTATION_PLAN.md` |
+| `ralph:build {spec?}`    | Pick task, implement, test, commit, loop |
 | `ralph:finish`           | List and remove git worktrees |
 
 ## Testing

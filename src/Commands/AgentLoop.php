@@ -8,11 +8,11 @@ use Satoved\Lararalph\LararalphServiceProvider;
 class AgentLoop extends Command
 {
     protected $signature = 'ralph:loop
-                            {project : The project name (used for screen session naming and logging)}
+                            {spec : The spec name (used for screen session naming and logging)}
                             {iterations? : Number of iterations to run (default: 30, ignored with --once)}
                             {--once : Run a single iteration without detaching}
                             {--prompt= : The prompt to send to Claude (required)}
-                            {--branch= : Use a custom branch name (default: agent/<project>)}
+                            {--branch= : Use a custom branch name (default: agent/<spec>)}
                             {--worktree : Run in a separate worktree instead of current directory}
                             {--attach : Attach to the screen session after starting}';
 
@@ -28,7 +28,7 @@ class AgentLoop extends Command
             return 1;
         }
 
-        $project = $this->argument('project');
+        $spec = $this->argument('spec');
         $iterations = $this->argument('iterations') ?? 30;
         $once = $this->option('once');
         $branch = $this->option('branch');
@@ -38,9 +38,9 @@ class AgentLoop extends Command
 
         $needsWorktreeSetup = false;
         if ($useWorktree) {
-            $branchName = 'agent/'.($branch ?: $project);
+            $branchName = 'agent/'.($branch ?: $spec);
             $repoName = basename($repoPath);
-            $workingPath = dirname($repoPath)."/{$repoName}-{$project}";
+            $workingPath = dirname($repoPath)."/{$repoName}-{$spec}";
 
             $this->info("Setting up worktree for branch: {$branchName}");
             $setupResult = $this->setupWorktree($repoPath, $workingPath, $branchName);
@@ -54,10 +54,10 @@ class AgentLoop extends Command
             $workingPath = $repoPath;
         }
 
-        return $this->runCommandAgent($project, $iterations, $once, $repoPath, $workingPath, $useWorktree, $needsWorktreeSetup, $prompt);
+        return $this->runCommandAgent($spec, $iterations, $once, $repoPath, $workingPath, $useWorktree, $needsWorktreeSetup, $prompt);
     }
 
-    protected function runCommandAgent(string $project, int $iterations, bool $once, string $repoPath, string $workingPath, bool $useWorktree, bool $needsWorktreeSetup, string $prompt): int
+    protected function runCommandAgent(string $spec, int $iterations, bool $once, string $repoPath, string $workingPath, bool $useWorktree, bool $needsWorktreeSetup, string $prompt): int
     {
         $setupCmd = '';
         if ($needsWorktreeSetup) {
@@ -71,7 +71,7 @@ class AgentLoop extends Command
 
         if ($once) {
             $scriptPath = LararalphServiceProvider::binPath('ralph-loop.js');
-            $script = "RALPH_PROMPT={$escapedPrompt} node {$scriptPath} {$project} 1";
+            $script = "RALPH_PROMPT={$escapedPrompt} node {$scriptPath} {$spec} 1";
             $command = "cd {$workingPath} && {$setupCmd}{$script}";
 
             $this->info('Running single iteration...');
@@ -80,10 +80,10 @@ class AgentLoop extends Command
             return $exitCode;
         }
 
-        $screenName = "agent-{$project}".($useWorktree ? '-wt' : '');
+        $screenName = "agent-{$spec}".($useWorktree ? '-wt' : '');
 
         $scriptPath = LararalphServiceProvider::binPath('ralph-loop.js');
-        $script = "RALPH_PROMPT={$escapedPrompt} node {$scriptPath} {$project} {$iterations}";
+        $script = "RALPH_PROMPT={$escapedPrompt} node {$scriptPath} {$spec} {$iterations}";
         $innerCmd = "cd {$workingPath} && {$setupCmd}{$script}";
 
         $command = "screen -dmS {$screenName} zsh -ic '{$innerCmd}'";
@@ -99,7 +99,7 @@ class AgentLoop extends Command
 
         $this->info('Screen session started successfully.');
 
-        $this->trackAgent($screenName, $project, $workingPath);
+        $this->trackAgent($screenName, $spec, $workingPath);
 
         if ($this->option('attach')) {
             $this->newLine();
@@ -162,7 +162,7 @@ class AgentLoop extends Command
         return true;
     }
 
-    protected function trackAgent(string $screenName, string $project, string $workingPath): void
+    protected function trackAgent(string $screenName, string $spec, string $workingPath): void
     {
         $liveAgentsFile = base_path('.claude/.live-agents');
         $agents = [];
@@ -172,7 +172,7 @@ class AgentLoop extends Command
         }
 
         $agents[$screenName] = [
-            'project' => $project,
+            'spec' => $spec,
             'workingPath' => $workingPath,
             'startedAt' => now()->toIso8601String(),
         ];

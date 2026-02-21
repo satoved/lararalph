@@ -10,26 +10,26 @@ class PlanCommand extends Command
     use ResolvesSpecs;
 
     protected $signature = 'ralph:plan
-                            {feature? : The feature name to plan (interactive if not provided)}
+                            {spec? : The spec name to plan (interactive if not provided)}
                             {--force : Regenerate IMPLEMENTATION_PLAN.md even if it exists}';
 
     protected $description = 'Create an implementation plan for a PRD by analyzing the codebase';
 
     public function handle()
     {
-        $feature = $this->argument('feature');
+        $spec = $this->argument('spec');
         $force = $this->option('force');
 
-        if (! $feature) {
-            $feature = $this->chooseSpec('Select a spec to plan');
-            if (! $feature) {
+        if (! $spec) {
+            $spec = $this->chooseSpec('Select a spec to plan');
+            if (! $spec) {
                 return 1;
             }
         }
 
-        $specPath = $this->resolveSpecPath($feature);
+        $specPath = $this->resolveSpecPath($spec);
         if (! $specPath) {
-            $this->error("Spec not found: {$feature}");
+            $this->error("Spec not found: {$spec}");
             $this->info("Use '/prd' skill inside Claude to create a new spec first.");
 
             return 1;
@@ -51,9 +51,9 @@ class PlanCommand extends Command
             return 1;
         }
 
-        $project = basename($specPath);
+        $spec = basename($specPath);
 
-        $this->info('Creating implementation plan for: '.$project);
+        $this->info('Creating implementation plan for: '.$spec);
         $this->newLine();
 
         $prompt = view('lararalph::prompts.plan', [
@@ -62,7 +62,7 @@ class PlanCommand extends Command
         ])->render();
 
         $exitCode = $this->call('ralph:loop', [
-            'project' => $project,
+            'spec' => $spec,
             '--once' => true,
             '--prompt' => $prompt,
         ]);
