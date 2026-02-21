@@ -32,23 +32,23 @@ class BuildCommand extends Command
         } catch (NoBacklogSpecs) {
             $this->error('No specs found in '.FileSpecRepository::BACKLOG_DIR.'/');
 
-            return 1;
+            return self::FAILURE;
         } catch (SpecFolderDoesNotExist) {
             $this->error("Spec folder not found: {$specName}");
 
-            return 1;
+            return self::FAILURE;
         } catch (SpecFolderDoesNotContainPrdFile) {
             $this->error(Spec::PRD_FILENAME." missing for spec: {$specName}");
 
-            return 1;
+            return self::FAILURE;
         }
 
-        if (! file_exists($resolved->absolutePlanFilePath)) {
+        if (! $resolved->planFileExists()) {
             $this->error(Spec::PLAN_FILENAME." not found at: {$resolved->absolutePlanFilePath}");
             $this->newLine();
             $this->info("Run 'php artisan ralph:plan {$resolved->name}' first to create an implementation plan.");
 
-            return 1;
+            return self::FAILURE;
         }
 
         $cwd = null;

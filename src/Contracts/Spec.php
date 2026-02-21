@@ -14,4 +14,9 @@ final readonly class Spec
         public string $absolutePrdFilePath,
         public string $absolutePlanFilePath,
     ) {}
+
+    public function planFileExists(): bool
+    {
+        return file_exists($this->absolutePlanFilePath);
+    }
 }

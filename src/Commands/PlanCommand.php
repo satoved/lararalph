@@ -43,7 +43,7 @@ class PlanCommand extends Command
             return self::FAILURE;
         }
 
-        if (file_exists($resolved->absolutePlanFilePath) && ! $this->option('force')) {
+        if ($resolved->planFileExists() && ! $this->option('force')) {
             $this->error(Spec::PLAN_FILENAME." already exists at: {$resolved->absolutePlanFilePath}");
             $this->info('Use --force to regenerate.');
 
@@ -63,14 +63,14 @@ class PlanCommand extends Command
 
         $prompt = view('lararalph::prompts.plan', [
             'prdFilePath' => $resolved->absolutePrdFilePath,
-            'planFilePath' => file_exists($resolved->absolutePlanFilePath) ? $resolved->absolutePlanFilePath : null,
+            'planFilePath' => $resolved->planFileExists() ? $resolved->absolutePlanFilePath : null,
         ])->render();
 
         $exitCode = $runner->run($resolved->name, $prompt, 1, $cwd);
 
         if ($exitCode === self::SUCCESS) {
             $this->newLine();
-            if (file_exists($resolved->absolutePlanFilePath)) {
+            if ($resolved->planFileExists()) {
                 $this->info('Implementation plan created: '.$resolved->absolutePlanFilePath);
             } else {
                 $this->warn('Claude completed but '.Spec::PLAN_FILENAME.' was not created.');
