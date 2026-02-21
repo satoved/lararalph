@@ -6,9 +6,9 @@ use Illuminate\Console\Command;
 
 use function Laravel\Prompts\multiselect;
 
-class WorktreeRemoveCommand extends Command
+class FinishCommand extends Command
 {
-    protected $signature = 'ralph:worktree:remove';
+    protected $signature = 'ralph:finish';
 
     protected $description = 'List and remove git worktrees';
 

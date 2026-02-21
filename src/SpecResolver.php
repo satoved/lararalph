@@ -1,21 +1,16 @@
 <?php
 
-namespace Satoved\Lararalph\Commands\Concerns;
+namespace Satoved\Lararalph;
 
 use function Laravel\Prompts\search;
 
-trait ResolvesSpecs
+class SpecResolver
 {
-    protected function chooseSpec(string $label = 'Select a spec'): ?string
+    public function choose(string $label = 'Select a spec'): ?string
     {
-        $this->info('Fetching available specs...');
-
         $specs = $this->getBacklogSpecs();
 
         if (empty($specs)) {
-            $this->error('No specs found in specs/backlog/');
-            $this->info("Run '/prd' to create a new spec first.");
-
             return null;
         }
 
@@ -29,7 +24,7 @@ trait ResolvesSpecs
         );
     }
 
-    protected function getBacklogSpecs(): array
+    public function getBacklogSpecs(): array
     {
         $specsDir = getcwd().'/specs/backlog';
         if (! is_dir($specsDir)) {
@@ -42,7 +37,7 @@ trait ResolvesSpecs
         ));
     }
 
-    protected function resolveSpecPath(string $spec): ?string
+    public function resolve(string $spec): ?string
     {
         $backlogDir = getcwd().'/specs/backlog';
         $completeDir = getcwd().'/specs/complete';
@@ -60,27 +55,18 @@ trait ResolvesSpecs
         }
 
         // Try partial match (search for spec name after date prefix)
-        if (is_dir($backlogDir)) {
-            foreach (scandir($backlogDir) as $dir) {
-                if ($dir === '.' || $dir === '..') {
-                    continue;
-                }
-                if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $dir, $matches)) {
-                    if ($matches[1] === $spec || str_contains($dir, $spec)) {
-                        return $backlogDir.'/'.$dir;
-                    }
-                }
+        foreach ([$backlogDir, $completeDir] as $dir) {
+            if (! is_dir($dir)) {
+                continue;
             }
-        }
 
-        if (is_dir($completeDir)) {
-            foreach (scandir($completeDir) as $dir) {
-                if ($dir === '.' || $dir === '..') {
+            foreach (scandir($dir) as $entry) {
+                if ($entry === '.' || $entry === '..') {
                     continue;
                 }
-                if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $dir, $matches)) {
-                    if ($matches[1] === $spec || str_contains($dir, $spec)) {
-                        return $completeDir.'/'.$dir;
+                if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $entry, $matches)) {
+                    if ($matches[1] === $spec || str_contains($entry, $spec)) {
+                        return $dir.'/'.$entry;
                     }
                 }
             }

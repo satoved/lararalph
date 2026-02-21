@@ -3,31 +3,32 @@
 namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
-use Satoved\Lararalph\Commands\Concerns\ResolvesSpecs;
+use Satoved\Lararalph\AgentRunner;
+use Satoved\Lararalph\SpecResolver;
 
 class PlanCommand extends Command
 {
-    use ResolvesSpecs;
-
     protected $signature = 'ralph:plan
                             {spec? : The spec name to plan (interactive if not provided)}
                             {--force : Regenerate IMPLEMENTATION_PLAN.md even if it exists}';
 
     protected $description = 'Create an implementation plan for a PRD by analyzing the codebase';
 
-    public function handle()
+    public function handle(SpecResolver $specs, AgentRunner $runner)
     {
         $spec = $this->argument('spec');
         $force = $this->option('force');
 
         if (! $spec) {
-            $spec = $this->chooseSpec('Select a spec to plan');
+            $spec = $specs->choose('Select a spec to plan');
             if (! $spec) {
+                $this->error('No specs found in specs/backlog/');
+
                 return 1;
             }
         }
 
-        $specPath = $this->resolveSpecPath($spec);
+        $specPath = $specs->resolve($spec);
         if (! $specPath) {
             $this->error("Spec not found: {$spec}");
             $this->info("Use '/prd' skill inside Claude to create a new spec first.");
@@ -61,11 +62,7 @@ class PlanCommand extends Command
             'planFilePath' => file_exists($planFile) ? $planFile : null,
         ])->render();
 
-        $exitCode = $this->call('ralph:loop', [
-            'spec' => $spec,
-            '--once' => true,
-            '--prompt' => $prompt,
-        ]);
+        $exitCode = $runner->run($spec, $prompt, 1);
 
         if ($exitCode === 0) {
             $this->newLine();

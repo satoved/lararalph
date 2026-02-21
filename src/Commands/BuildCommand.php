@@ -3,39 +3,36 @@
 namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
-use Satoved\Lararalph\Commands\Concerns\ResolvesSpecs;
+use Satoved\Lararalph\AgentRunner;
+use Satoved\Lararalph\SpecResolver;
 
 class BuildCommand extends Command
 {
-    use ResolvesSpecs;
-
     protected $signature = 'ralph:build
                             {spec? : The spec name to build (interactive if not provided)}
-                            {iterations? : Number of iterations to run (default: 30, ignored with --once)}
-                            {--once : Run a single iteration without detaching}
-                            {--branch= : Use a custom branch name (default: agent/<spec>)}
-                            {--worktree : Run in a separate worktree instead of current directory}
-                            {--attach : Attach to the screen session after starting}';
+                            {--iterations=30 : Number of iterations to run}';
 
     protected $description = 'Start an agent build session to work through a PRD and implementation plan';
 
-    public function handle()
+    public function handle(SpecResolver $specs, AgentRunner $runner)
     {
         $spec = $this->argument('spec');
 
         if (! $spec) {
-            $spec = $this->chooseSpec();
+            $spec = $specs->choose();
             if (! $spec) {
+                $this->error('No specs found in specs/backlog/');
+
                 return 1;
             }
         }
 
-        $specPath = $this->resolveSpecPath($spec);
+        $specPath = $specs->resolve($spec);
         if (! $specPath) {
             $this->error("Spec not found: {$spec}");
             $this->info('Available specs in specs/backlog/:');
-            foreach ($this->getBacklogSpecs() as $spec) {
-                $this->line("  - {$spec}");
+            foreach ($specs->getBacklogSpecs() as $s) {
+                $this->line("  - {$s}");
             }
 
             return 1;
@@ -68,31 +65,6 @@ class BuildCommand extends Command
             'planFilePath' => $planFile,
         ])->render();
 
-        $args = [
-            'spec' => $spec,
-            '--prompt' => $prompt,
-        ];
-
-        if ($this->argument('iterations')) {
-            $args['iterations'] = $this->argument('iterations');
-        }
-
-        if ($this->option('once')) {
-            $args['--once'] = true;
-        }
-
-        if ($this->option('branch')) {
-            $args['--branch'] = $this->option('branch');
-        }
-
-        if ($this->option('worktree')) {
-            $args['--worktree'] = true;
-        }
-
-        if ($this->option('attach')) {
-            $args['--attach'] = true;
-        }
-
-        return $this->call('ralph:loop', $args);
+        return $runner->run($spec, $prompt, (int) $this->option('iterations'));
     }
 }
