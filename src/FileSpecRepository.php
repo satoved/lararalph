@@ -44,6 +44,17 @@ class FileSpecRepository implements SpecRepository
         );
     }
 
+    public function complete(Spec $spec): void
+    {
+        $completeDir = base_path(self::COMPLETE_DIR);
+
+        if (! is_dir($completeDir)) {
+            mkdir($completeDir, 0755, true);
+        }
+
+        rename($spec->absoluteFolderPath, $completeDir.'/'.basename($spec->absoluteFolderPath));
+    }
+
     private function findSpecPath(string $spec): ?string
     {
         $backlogDir = base_path(self::BACKLOG_DIR);

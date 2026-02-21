@@ -312,6 +312,7 @@ async function main() {
 
   log(`\n${colors.yellow}⚠ Reached ${iterations} iterations without full completion.${colors.reset}`);
   closeLogging();
+  process.exit(2);
 }
 
 main();

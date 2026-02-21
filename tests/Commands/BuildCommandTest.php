@@ -29,6 +29,7 @@ afterEach(function () {
 it('runs build successfully with all files present', function () {
     $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->with('test-spec')->andReturn($this->resolved);
+    $specs->shouldReceive('complete')->once()->with($this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -40,12 +41,14 @@ it('runs build successfully with all files present', function () {
 
     $this->artisan('ralph:build', ['spec' => 'test-spec'])
         ->expectsOutputToContain('Building: test-spec')
+        ->expectsOutputToContain("Spec 'test-spec' moved to complete.")
         ->assertExitCode(0);
 });
 
 it('passes custom iterations to runner', function () {
     $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs->shouldReceive('complete')->once();
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -95,6 +98,7 @@ it('fails when implementation plan is missing', function () {
 it('renders the build prompt with correct file paths', function () {
     $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs->shouldReceive('complete')->once();
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -111,9 +115,10 @@ it('renders the build prompt with correct file paths', function () {
         ->assertExitCode(0);
 });
 
-it('propagates runner exit code', function () {
+it('does not move spec when runner returns exit code 2 (iterations exhausted)', function () {
     $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs->shouldNotReceive('complete');
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -124,9 +129,24 @@ it('propagates runner exit code', function () {
         ->assertExitCode(2);
 });
 
+it('does not move spec when runner returns exit code 1 (error)', function () {
+    $specs = Mockery::mock(SpecRepository::class);
+    $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs->shouldNotReceive('complete');
+    $this->app->instance(SpecRepository::class, $specs);
+
+    $runner = Mockery::mock(AgentRunner::class);
+    $runner->shouldReceive('run')->once()->andReturn(1);
+    $this->app->instance(AgentRunner::class, $runner);
+
+    $this->artisan('ralph:build', ['spec' => 'test-spec'])
+        ->assertExitCode(1);
+});
+
 it('creates worktree and passes cwd to runner when --create-worktree is set', function () {
     $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs->shouldReceive('complete')->once();
     $this->app->instance(SpecRepository::class, $specs);
 
     $worktreeCreator = Mockery::mock(WorktreeCreator::class);
@@ -152,6 +172,7 @@ it('creates worktree and passes cwd to runner when --create-worktree is set', fu
 it('does not create worktree without --create-worktree flag', function () {
     $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs->shouldReceive('complete')->once();
     $this->app->instance(SpecRepository::class, $specs);
 
     $worktreeCreator = Mockery::mock(WorktreeCreator::class);

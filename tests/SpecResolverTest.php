@@ -104,3 +104,31 @@ describe('resolve', function () {
         expect($this->resolver->resolve('no-prd'))->toBeNull();
     });
 });
+
+describe('complete', function () {
+    it('moves spec directory from backlog to complete', function () {
+        mkdir($this->tempDir.'/specs/backlog/my-feature', 0755, true);
+        mkdir($this->tempDir.'/specs/complete', 0755, true);
+        file_put_contents($this->tempDir.'/specs/backlog/my-feature/PRD.md', '# PRD');
+
+        $spec = $this->resolver->resolve('my-feature');
+
+        $this->resolver->complete($spec);
+
+        expect(is_dir($this->tempDir.'/specs/complete/my-feature'))->toBeTrue()
+            ->and(is_dir($this->tempDir.'/specs/backlog/my-feature'))->toBeFalse()
+            ->and(file_get_contents($this->tempDir.'/specs/complete/my-feature/PRD.md'))->toBe('# PRD');
+    });
+
+    it('creates complete directory if it does not exist', function () {
+        mkdir($this->tempDir.'/specs/backlog/my-feature', 0755, true);
+        file_put_contents($this->tempDir.'/specs/backlog/my-feature/PRD.md', '# PRD');
+
+        $spec = $this->resolver->resolve('my-feature');
+
+        $this->resolver->complete($spec);
+
+        expect(is_dir($this->tempDir.'/specs/complete'))->toBeTrue()
+            ->and(is_dir($this->tempDir.'/specs/complete/my-feature'))->toBeTrue();
+    });
+});

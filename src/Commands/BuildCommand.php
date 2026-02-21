@@ -64,6 +64,13 @@ class BuildCommand extends Command
             'planFilePath' => $resolved->absolutePlanFilePath,
         ])->render();
 
-        return $runner->run($resolved->name, $prompt, (int) $this->option('iterations'), $cwd);
+        $exitCode = $runner->run($resolved->name, $prompt, (int) $this->option('iterations'), $cwd);
+
+        if ($exitCode === 0) {
+            $specs->complete($resolved);
+            $this->info("Spec '{$resolved->name}' moved to complete.");
+        }
+
+        return $exitCode;
     }
 }
