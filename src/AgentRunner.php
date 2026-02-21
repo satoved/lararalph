@@ -8,7 +8,7 @@ class AgentRunner
     {
         $escapedPrompt = escapeshellarg($prompt);
         $scriptPath = LararalphServiceProvider::binPath('ralph-loop.js');
-        $cwd = $cwd ?? getcwd();
+        $cwd = $cwd ?? base_path();
 
         $command = "cd {$cwd} && RALPH_PROMPT={$escapedPrompt} node {$scriptPath} {$spec} {$iterations}";
 

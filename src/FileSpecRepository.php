@@ -13,7 +13,7 @@ class FileSpecRepository implements SpecRepository
 
     public function getBacklogSpecs(): array
     {
-        $specsDir = getcwd().'/'.self::BACKLOG_DIR;
+        $specsDir = base_path(self::BACKLOG_DIR);
         if (! is_dir($specsDir)) {
             return [];
         }
@@ -46,7 +46,7 @@ class FileSpecRepository implements SpecRepository
 
     private function findSpecPath(string $spec): ?string
     {
-        $backlogDir = getcwd().'/'.self::BACKLOG_DIR;
+        $backlogDir = base_path(self::BACKLOG_DIR);
 
         // Try exact match
         $exactPath = $backlogDir.'/'.$spec;

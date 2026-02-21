@@ -7,14 +7,16 @@ beforeEach(function () {
     $this->tempDir = realpath(sys_get_temp_dir()).'/lararalph-spec-test-'.uniqid();
     mkdir($this->tempDir.'/specs/backlog', 0755, true);
 
-    $this->originalCwd = getcwd();
-    chdir($this->tempDir);
+    $this->originalBasePath = base_path();
+    $tempDir = $this->tempDir;
+    (fn () => $this->basePath = $tempDir)->call(app());
 
     $this->resolver = new FileSpecRepository;
 });
 
 afterEach(function () {
-    chdir($this->originalCwd);
+    $originalBasePath = $this->originalBasePath;
+    (fn () => $this->basePath = $originalBasePath)->call(app());
 
     // Recursive delete
     $files = new RecursiveIteratorIterator(

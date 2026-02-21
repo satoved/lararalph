@@ -10,12 +10,14 @@ beforeEach(function () {
     // Init a real git repo
     exec("cd {$this->tempDir} && git init && git commit --allow-empty -m 'init' 2>&1");
 
-    $this->originalCwd = getcwd();
-    chdir($this->tempDir);
+    $this->originalBasePath = base_path();
+    $tempDir = $this->tempDir;
+    (fn () => $this->basePath = $tempDir)->call(app());
 });
 
 afterEach(function () {
-    chdir($this->originalCwd);
+    $originalBasePath = $this->originalBasePath;
+    (fn () => $this->basePath = $originalBasePath)->call(app());
 
     // Clean up worktrees before removing
     exec("cd {$this->tempDir} && git worktree prune 2>&1");
@@ -58,7 +60,7 @@ it('calls setup steps with correct arguments', function () {
         ->once()
         ->withArgs(function ($worktreePath, $sourcePath, $spec) {
             return str_contains($worktreePath, '-test-feature')
-                && $sourcePath === getcwd()
+                && $sourcePath === base_path()
                 && $spec === 'test-feature';
         });
 
@@ -86,7 +88,7 @@ it('throws RuntimeException on git failure', function () {
     // Point to a non-git directory
     $nonGitDir = sys_get_temp_dir().'/lararalph-nongit-'.uniqid();
     mkdir($nonGitDir, 0755, true);
-    chdir($nonGitDir);
+    (fn () => $this->basePath = $nonGitDir)->call(app());
 
     config(['lararalph.worktree_setup' => []]);
 

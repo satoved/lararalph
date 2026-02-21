@@ -14,7 +14,7 @@ class FinishCommand extends Command
 
     public function handle()
     {
-        $repoPath = getcwd();
+        $repoPath = base_path();
 
         $output = shell_exec("cd {$repoPath} && git worktree list --porcelain 2>&1");
         if (! $output) {

@@ -9,9 +9,9 @@ class WorktreeCreator
 {
     public function getWorktreePath(string $spec): string
     {
-        $projectName = basename(getcwd());
+        $projectName = basename(base_path());
 
-        return dirname(getcwd()).'/'.$projectName.'-'.$spec;
+        return dirname(base_path()).'/'.$projectName.'-'.$spec;
     }
 
     public function create(string $spec): string
@@ -22,7 +22,8 @@ class WorktreeCreator
             $escapedPath = escapeshellarg($worktreePath);
             $escapedBranch = escapeshellarg($spec);
 
-            exec("git worktree add -b {$escapedBranch} {$escapedPath} 2>&1", $output, $exitCode);
+            $basePath = escapeshellarg(base_path());
+            exec("cd {$basePath} && git worktree add -b {$escapedBranch} {$escapedPath} 2>&1", $output, $exitCode);
 
             if ($exitCode !== 0) {
                 throw new RuntimeException(
@@ -31,7 +32,7 @@ class WorktreeCreator
             }
         }
 
-        $sourcePath = getcwd();
+        $sourcePath = base_path();
         $steps = config('lararalph.worktree_setup', []);
 
         foreach ($steps as $stepClass) {
