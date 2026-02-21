@@ -47,33 +47,22 @@ class FileSpecRepository implements SpecRepository
     private function findSpecPath(string $spec): ?string
     {
         $backlogDir = getcwd().'/'.self::BACKLOG_DIR;
-        $completeDir = getcwd().'/'.self::COMPLETE_DIR;
 
-        // First, try exact match in backlog
+        // Try exact match
         $exactPath = $backlogDir.'/'.$spec;
         if (is_dir($exactPath)) {
             return $exactPath;
         }
 
-        // Try exact match in complete
-        $exactPath = $completeDir.'/'.$spec;
-        if (is_dir($exactPath)) {
-            return $exactPath;
-        }
-
         // Try partial match (search for spec name after date prefix)
-        foreach ([$backlogDir, $completeDir] as $dir) {
-            if (! is_dir($dir)) {
-                continue;
-            }
-
-            foreach (scandir($dir) as $entry) {
+        if (is_dir($backlogDir)) {
+            foreach (scandir($backlogDir) as $entry) {
                 if ($entry === '.' || $entry === '..') {
                     continue;
                 }
                 if (preg_match('/^\d{4}-\d{2}-\d{2}-(.+)$/', $entry, $matches)) {
                     if ($matches[1] === $spec || str_contains($entry, $spec)) {
-                        return $dir.'/'.$entry;
+                        return $backlogDir.'/'.$entry;
                     }
                 }
             }

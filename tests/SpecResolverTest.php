@@ -6,7 +6,6 @@ use Satoved\Lararalph\FileSpecRepository;
 beforeEach(function () {
     $this->tempDir = realpath(sys_get_temp_dir()).'/lararalph-spec-test-'.uniqid();
     mkdir($this->tempDir.'/specs/backlog', 0755, true);
-    mkdir($this->tempDir.'/specs/complete', 0755, true);
 
     $this->originalCwd = getcwd();
     chdir($this->tempDir);
@@ -72,27 +71,6 @@ describe('resolve', function () {
             ->and($result->absolutePlanFilePath)->toBe($this->tempDir.'/specs/backlog/my-feature/IMPLEMENTATION_PLAN.md');
     });
 
-    it('resolves exact match in complete', function () {
-        mkdir($this->tempDir.'/specs/complete/my-feature', 0755, true);
-        file_put_contents($this->tempDir.'/specs/complete/my-feature/PRD.md', '# PRD');
-
-        $result = $this->resolver->resolve('my-feature');
-
-        expect($result)->toBeInstanceOf(Spec::class)
-            ->and($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/complete/my-feature');
-    });
-
-    it('prefers backlog over complete for exact match', function () {
-        mkdir($this->tempDir.'/specs/backlog/my-feature', 0755, true);
-        file_put_contents($this->tempDir.'/specs/backlog/my-feature/PRD.md', '# PRD');
-        mkdir($this->tempDir.'/specs/complete/my-feature', 0755, true);
-        file_put_contents($this->tempDir.'/specs/complete/my-feature/PRD.md', '# PRD');
-
-        $result = $this->resolver->resolve('my-feature');
-
-        expect($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/backlog/my-feature');
-    });
-
     it('resolves date-prefixed spec by name suffix', function () {
         mkdir($this->tempDir.'/specs/backlog/2025-01-15-my-feature', 0755, true);
         file_put_contents($this->tempDir.'/specs/backlog/2025-01-15-my-feature/PRD.md', '# PRD');
@@ -112,16 +90,6 @@ describe('resolve', function () {
 
         expect($result)->toBeInstanceOf(Spec::class)
             ->and($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/backlog/2025-01-15-my-feature');
-    });
-
-    it('resolves date-prefixed spec in complete directory', function () {
-        mkdir($this->tempDir.'/specs/complete/2025-03-20-done-feature', 0755, true);
-        file_put_contents($this->tempDir.'/specs/complete/2025-03-20-done-feature/PRD.md', '# PRD');
-
-        $result = $this->resolver->resolve('done-feature');
-
-        expect($result)->toBeInstanceOf(Spec::class)
-            ->and($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/complete/2025-03-20-done-feature');
     });
 
     it('returns null for nonexistent spec', function () {
