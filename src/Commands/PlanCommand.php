@@ -3,8 +3,7 @@
 namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
-use Satoved\Lararalph\LoopRunner;
-use Satoved\Lararalph\LoopRunnerResult;
+use Satoved\Lararalph\Contracts\LoopRunner;
 use Satoved\Lararalph\Contracts\SearchesSpec;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
@@ -12,6 +11,7 @@ use Satoved\Lararalph\Exceptions\NoBacklogSpecs;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
 use Satoved\Lararalph\FileSpecRepository;
+use Satoved\Lararalph\LoopRunnerResult;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 class PlanCommand extends Command
@@ -27,7 +27,7 @@ class PlanCommand extends Command
     {
         try {
             $specName = $this->argument('spec');
-            $resolved = $specName
+            $spec = $specName
                 ? $specs->resolve($specName)
                 : $chooseSpec('Select a spec to plan');
         } catch (NoBacklogSpecs) {
@@ -44,35 +44,40 @@ class PlanCommand extends Command
             return self::FAILURE;
         }
 
-        if ($resolved->planFileExists() && ! $this->option('force')) {
-            $this->error(Spec::PLAN_FILENAME." already exists at: {$resolved->absolutePlanFilePath}");
+        if ($spec->planFileExists() && ! $this->option('force')) {
+            $this->error(Spec::PLAN_FILENAME." already exists at: {$spec->absolutePlanFilePath}");
             $this->info('Use --force to regenerate.');
 
             return self::FAILURE;
         }
 
-        $cwd = null;
-
         if ($this->option('create-worktree')) {
             $this->info('Creating worktree...');
-            $cwd = $worktreeCreator->create($resolved->name);
+            $cwd = $worktreeCreator->create($spec->name);
             $this->info("Worktree created: {$cwd}");
+        } else {
+            $cwd = base_path();
         }
 
-        $this->info('Creating implementation plan for: '.$resolved->name);
+        $this->info('Creating implementation plan for: '.$spec->name);
         $this->newLine();
 
         $prompt = view('lararalph::prompts.plan', [
-            'prdFilePath' => $resolved->absolutePrdFilePath,
-            'planFilePath' => $resolved->planFileExists() ? $resolved->absolutePlanFilePath : null,
+            'prdFilePath' => $spec->absolutePrdFilePath,
+            'planFilePath' => $spec->planFileExists() ? $spec->absolutePlanFilePath : null,
         ])->render();
 
-        $result = $runner->run($resolved, $prompt, 1, $cwd);
+        $result = $runner->run(
+            spec: $spec,
+            prompt: $prompt,
+            workingDirectory: $cwd,
+            maxIterations: 1
+        );
 
-        if ($result === LoopRunnerResult::Complete) {
+        if ($result === LoopRunnerResult::FullyComplete) {
             $this->newLine();
-            if ($resolved->planFileExists()) {
-                $this->info('Implementation plan created: '.$resolved->absolutePlanFilePath);
+            if ($spec->planFileExists()) {
+                $this->info('Implementation plan created: '.$spec->absolutePlanFilePath);
             } else {
                 $this->warn('Claude completed but '.Spec::PLAN_FILENAME.' was not created.');
                 $this->info('You may need to run the command again or create it manually.');

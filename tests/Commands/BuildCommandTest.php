@@ -1,13 +1,14 @@
 <?php
 
-use Satoved\Lararalph\LoopRunner;
-use Satoved\Lararalph\LoopRunnerResult;
+use Satoved\Lararalph\Contracts\LoopRunner;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
-use Satoved\Lararalph\Worktree\WorktreeCreator;
+use Satoved\Lararalph\LoopRunnerResult;
+use Satoved\Lararalph\Tests\Fakes\FakeLoopRunner;
 use Satoved\Lararalph\Tests\Fakes\FakeSpecRepository;
+use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 beforeEach(function () {
     $this->specDir = sys_get_temp_dir().'/lararalph-test-'.uniqid();
@@ -34,11 +35,7 @@ it('runs build successfully with all files present', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(LoopRunner::class);
-    $runner->shouldReceive('run')
-        ->once()
-        ->with(Mockery::type(Spec::class), Mockery::type('string'), 30, null)
-        ->andReturn(LoopRunnerResult::Complete);
+    $runner = new FakeLoopRunner(LoopRunnerResult::FullyComplete);
     $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:build', ['spec' => 'test-spec'])
@@ -47,21 +44,22 @@ it('runs build successfully with all files present', function () {
         ->assertExitCode(0);
 
     expect($specs->completed)->toBeTrue();
+    expect($runner->receivedSpec)->toBeInstanceOf(Spec::class);
+    expect($runner->receivedMaxIterations)->toBe(30);
+    expect($runner->receivedWorkingDirectory)->toBe(base_path());
 });
 
 it('passes custom iterations to runner', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(LoopRunner::class);
-    $runner->shouldReceive('run')
-        ->once()
-        ->with(Mockery::type(Spec::class), Mockery::type('string'), 10, null)
-        ->andReturn(LoopRunnerResult::Complete);
+    $runner = new FakeLoopRunner(LoopRunnerResult::FullyComplete);
     $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:build', ['spec' => 'test-spec', '--iterations' => 10])
         ->assertExitCode(0);
+
+    expect($runner->receivedMaxIterations)->toBe(10);
 });
 
 it('fails when spec folder does not exist', function () {
@@ -112,26 +110,22 @@ it('renders the build prompt with correct file paths', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(LoopRunner::class);
-    $runner->shouldReceive('run')
-        ->once()
-        ->withArgs(function ($spec, $prompt, $iterations) {
-            return str_contains($prompt, 'ONLY WORK ON A SINGLE TASK')
-                && str_contains($prompt, 'IMPLEMENTATION_PLAN.md');
-        })
-        ->andReturn(LoopRunnerResult::Complete);
+    $runner = new FakeLoopRunner(LoopRunnerResult::FullyComplete);
     $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:build', ['spec' => 'test-spec'])
         ->assertExitCode(0);
+
+    expect($runner->receivedPrompt)
+        ->toContain('ONLY WORK ON A SINGLE TASK')
+        ->toContain('IMPLEMENTATION_PLAN.md');
 });
 
 it('does not move spec when runner returns exit code 2 (iterations exhausted)', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(LoopRunner::class);
-    $runner->shouldReceive('run')->once()->andReturn(LoopRunnerResult::MaxIterationsReached);
+    $runner = new FakeLoopRunner(LoopRunnerResult::MaxIterationsReached);
     $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:build', ['spec' => 'test-spec'])
@@ -144,8 +138,7 @@ it('does not move spec when runner returns exit code 1 (error)', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(LoopRunner::class);
-    $runner->shouldReceive('run')->once()->andReturn(LoopRunnerResult::Error);
+    $runner = new FakeLoopRunner(LoopRunnerResult::Error);
     $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:build', ['spec' => 'test-spec'])
@@ -165,17 +158,15 @@ it('creates worktree and passes cwd to runner when --create-worktree is set', fu
         ->andReturn('/tmp/myapp-test-spec');
     $this->app->instance(WorktreeCreator::class, $worktreeCreator);
 
-    $runner = Mockery::mock(LoopRunner::class);
-    $runner->shouldReceive('run')
-        ->once()
-        ->with(Mockery::type(Spec::class), Mockery::type('string'), 30, '/tmp/myapp-test-spec')
-        ->andReturn(LoopRunnerResult::Complete);
+    $runner = new FakeLoopRunner(LoopRunnerResult::FullyComplete);
     $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:build', ['spec' => 'test-spec', '--create-worktree' => true])
         ->expectsOutputToContain('Creating worktree...')
         ->expectsOutputToContain('Worktree created: /tmp/myapp-test-spec')
         ->assertExitCode(0);
+
+    expect($runner->receivedWorkingDirectory)->toBe('/tmp/myapp-test-spec');
 });
 
 it('does not create worktree without --create-worktree flag', function () {
@@ -186,13 +177,11 @@ it('does not create worktree without --create-worktree flag', function () {
     $worktreeCreator->shouldNotReceive('create');
     $this->app->instance(WorktreeCreator::class, $worktreeCreator);
 
-    $runner = Mockery::mock(LoopRunner::class);
-    $runner->shouldReceive('run')
-        ->once()
-        ->with(Mockery::type(Spec::class), Mockery::type('string'), 30, null)
-        ->andReturn(LoopRunnerResult::Complete);
+    $runner = new FakeLoopRunner(LoopRunnerResult::FullyComplete);
     $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:build', ['spec' => 'test-spec'])
         ->assertExitCode(0);
+
+    expect($runner->receivedWorkingDirectory)->toBe(base_path());
 });

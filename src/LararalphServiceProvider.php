@@ -5,6 +5,7 @@ namespace Satoved\Lararalph;
 use Satoved\Lararalph\Commands\BuildCommand;
 use Satoved\Lararalph\Commands\FinishCommand;
 use Satoved\Lararalph\Commands\PlanCommand;
+use Satoved\Lararalph\Contracts\LoopRunner;
 use Satoved\Lararalph\Contracts\SearchesSpec;
 use Satoved\Lararalph\Contracts\SpecRepository as SpecResolverContract;
 use Spatie\LaravelPackageTools\Package;
@@ -17,6 +18,7 @@ class LararalphServiceProvider extends PackageServiceProvider
         parent::register();
 
         $this->app->bind(SpecResolverContract::class, FileSpecRepository::class);
+        $this->app->bind(LoopRunner::class, NodeWrapperLoopRunner::class);
         $this->app->bind(SearchesSpec::class, Actions\SearchSpec::class);
     }
 
