@@ -35,7 +35,7 @@ class PlanCommand extends Command
             return 1;
         }
 
-        $planFile = $resolved->specPath.'/IMPLEMENTATION_PLAN.md';
+        $planFile = $resolved->absoluteFolderPath.'/IMPLEMENTATION_PLAN.md';
 
         if (file_exists($planFile) && ! $this->option('force')) {
             $this->error("IMPLEMENTATION_PLAN.md already exists at: {$planFile}");
@@ -48,19 +48,19 @@ class PlanCommand extends Command
 
         if ($this->option('create-worktree')) {
             $this->info('Creating worktree...');
-            $cwd = $worktreeCreator->create($resolved->spec);
+            $cwd = $worktreeCreator->create($resolved->name);
             $this->info("Worktree created: {$cwd}");
         }
 
-        $this->info('Creating implementation plan for: '.$resolved->spec);
+        $this->info('Creating implementation plan for: '.$resolved->name);
         $this->newLine();
 
         $prompt = view('lararalph::prompts.plan', [
-            'prdFilePath' => $resolved->prdFile,
+            'prdFilePath' => $resolved->absolutePrdFilePath,
             'planFilePath' => file_exists($planFile) ? $planFile : null,
         ])->render();
 
-        $exitCode = $runner->run($resolved->spec, $prompt, 1, $cwd);
+        $exitCode = $runner->run($resolved->name, $prompt, 1, $cwd);
 
         if ($exitCode === 0) {
             $this->newLine();

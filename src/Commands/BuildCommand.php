@@ -35,11 +35,11 @@ class BuildCommand extends Command
             return 1;
         }
 
-        $planFile = $resolved->specPath.'/IMPLEMENTATION_PLAN.md';
+        $planFile = $resolved->absoluteFolderPath.'/IMPLEMENTATION_PLAN.md';
         if (! file_exists($planFile)) {
             $this->error("IMPLEMENTATION_PLAN.md not found at: {$planFile}");
             $this->newLine();
-            $this->info("Run 'php artisan ralph:plan {$resolved->spec}' first to create an implementation plan.");
+            $this->info("Run 'php artisan ralph:plan {$resolved->name}' first to create an implementation plan.");
 
             return 1;
         }
@@ -48,18 +48,18 @@ class BuildCommand extends Command
 
         if ($this->option('create-worktree')) {
             $this->info('Creating worktree...');
-            $cwd = $worktreeCreator->create($resolved->spec);
+            $cwd = $worktreeCreator->create($resolved->name);
             $this->info("Worktree created: {$cwd}");
         }
 
-        $this->info("Building: {$resolved->spec}");
+        $this->info("Building: {$resolved->name}");
         $this->newLine();
 
         $prompt = view('lararalph::prompts.build', [
-            'prdFilePath' => $resolved->prdFile,
+            'prdFilePath' => $resolved->absolutePrdFilePath,
             'planFilePath' => $planFile,
         ])->render();
 
-        return $runner->run($resolved->spec, $prompt, (int) $this->option('iterations'), $cwd);
+        return $runner->run($resolved->name, $prompt, (int) $this->option('iterations'), $cwd);
     }
 }

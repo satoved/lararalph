@@ -1,7 +1,7 @@
 <?php
 
 use Satoved\Lararalph\AgentRunner;
-use Satoved\Lararalph\Contracts\ResolvedSpec;
+use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecResolver;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
@@ -10,10 +10,10 @@ beforeEach(function () {
     mkdir($this->specDir, 0755, true);
     file_put_contents($this->specDir.'/PRD.md', '# Test PRD');
 
-    $this->resolved = new ResolvedSpec(
-        spec: 'test-spec',
-        specPath: $this->specDir,
-        prdFile: $this->specDir.'/PRD.md',
+    $this->resolved = new Spec(
+        name: 'test-spec',
+        absoluteFolderPath: $this->specDir,
+        absolutePrdFilePath: $this->specDir.'/PRD.md',
     );
 });
 

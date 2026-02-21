@@ -2,7 +2,7 @@
 
 namespace Satoved\Lararalph;
 
-use Satoved\Lararalph\Contracts\ResolvedSpec;
+use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecResolver;
 
 use function Laravel\Prompts\search;
@@ -40,7 +40,7 @@ class FileSpecResolver implements SpecResolver
         ));
     }
 
-    public function resolve(string $spec): ?ResolvedSpec
+    public function resolve(string $spec): ?Spec
     {
         $specPath = $this->findSpecPath($spec);
         if (! $specPath) {
@@ -52,10 +52,10 @@ class FileSpecResolver implements SpecResolver
             return null;
         }
 
-        return new ResolvedSpec(
-            spec: basename($specPath),
-            specPath: $specPath,
-            prdFile: $prdFile,
+        return new Spec(
+            name: basename($specPath),
+            absoluteFolderPath: $specPath,
+            absolutePrdFilePath: $prdFile,
         );
     }
 

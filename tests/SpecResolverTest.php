@@ -1,6 +1,6 @@
 <?php
 
-use Satoved\Lararalph\Contracts\ResolvedSpec;
+use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\FileSpecResolver;
 
 beforeEach(function () {
@@ -65,10 +65,10 @@ describe('resolve', function () {
 
         $result = $this->resolver->resolve('my-feature');
 
-        expect($result)->toBeInstanceOf(ResolvedSpec::class)
-            ->and($result->spec)->toBe('my-feature')
-            ->and($result->specPath)->toBe($this->tempDir.'/specs/backlog/my-feature')
-            ->and($result->prdFile)->toBe($this->tempDir.'/specs/backlog/my-feature/PRD.md');
+        expect($result)->toBeInstanceOf(Spec::class)
+            ->and($result->name)->toBe('my-feature')
+            ->and($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/backlog/my-feature')
+            ->and($result->absolutePrdFilePath)->toBe($this->tempDir.'/specs/backlog/my-feature/PRD.md');
     });
 
     it('resolves exact match in complete', function () {
@@ -77,8 +77,8 @@ describe('resolve', function () {
 
         $result = $this->resolver->resolve('my-feature');
 
-        expect($result)->toBeInstanceOf(ResolvedSpec::class)
-            ->and($result->specPath)->toBe($this->tempDir.'/specs/complete/my-feature');
+        expect($result)->toBeInstanceOf(Spec::class)
+            ->and($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/complete/my-feature');
     });
 
     it('prefers backlog over complete for exact match', function () {
@@ -89,7 +89,7 @@ describe('resolve', function () {
 
         $result = $this->resolver->resolve('my-feature');
 
-        expect($result->specPath)->toBe($this->tempDir.'/specs/backlog/my-feature');
+        expect($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/backlog/my-feature');
     });
 
     it('resolves date-prefixed spec by name suffix', function () {
@@ -98,9 +98,9 @@ describe('resolve', function () {
 
         $result = $this->resolver->resolve('my-feature');
 
-        expect($result)->toBeInstanceOf(ResolvedSpec::class)
-            ->and($result->spec)->toBe('2025-01-15-my-feature')
-            ->and($result->specPath)->toBe($this->tempDir.'/specs/backlog/2025-01-15-my-feature');
+        expect($result)->toBeInstanceOf(Spec::class)
+            ->and($result->name)->toBe('2025-01-15-my-feature')
+            ->and($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/backlog/2025-01-15-my-feature');
     });
 
     it('resolves partial match in date-prefixed spec', function () {
@@ -109,8 +109,8 @@ describe('resolve', function () {
 
         $result = $this->resolver->resolve('my-feat');
 
-        expect($result)->toBeInstanceOf(ResolvedSpec::class)
-            ->and($result->specPath)->toBe($this->tempDir.'/specs/backlog/2025-01-15-my-feature');
+        expect($result)->toBeInstanceOf(Spec::class)
+            ->and($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/backlog/2025-01-15-my-feature');
     });
 
     it('resolves date-prefixed spec in complete directory', function () {
@@ -119,8 +119,8 @@ describe('resolve', function () {
 
         $result = $this->resolver->resolve('done-feature');
 
-        expect($result)->toBeInstanceOf(ResolvedSpec::class)
-            ->and($result->specPath)->toBe($this->tempDir.'/specs/complete/2025-03-20-done-feature');
+        expect($result)->toBeInstanceOf(Spec::class)
+            ->and($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/complete/2025-03-20-done-feature');
     });
 
     it('returns null for nonexistent spec', function () {
