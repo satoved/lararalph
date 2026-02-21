@@ -1,5 +1,6 @@
 <?php
 
+use Satoved\Lararalph\Contracts\SpecResolver;
 use Satoved\Lararalph\Worktree\Steps\WorktreeSetupStep;
 
 arch('it will not use debugging functions')
@@ -10,3 +11,7 @@ arch('worktree steps implement WorktreeSetupStep')
     ->expect('Satoved\Lararalph\Worktree\Steps')
     ->classes()
     ->toImplement(WorktreeSetupStep::class);
+
+arch('FileSpecResolver implements SpecResolver contract')
+    ->expect('Satoved\Lararalph\FileSpecResolver')
+    ->toImplement(SpecResolver::class);

@@ -5,11 +5,19 @@ namespace Satoved\Lararalph;
 use Satoved\Lararalph\Commands\BuildCommand;
 use Satoved\Lararalph\Commands\FinishCommand;
 use Satoved\Lararalph\Commands\PlanCommand;
+use Satoved\Lararalph\Contracts\SpecResolver as SpecResolverContract;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class LararalphServiceProvider extends PackageServiceProvider
 {
+    public function register(): void
+    {
+        parent::register();
+
+        $this->app->bind(SpecResolverContract::class, FileSpecResolver::class);
+    }
+
     public function configurePackage(Package $package): void
     {
         $package

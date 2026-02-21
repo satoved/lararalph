@@ -2,51 +2,13 @@
 
 namespace Satoved\Lararalph;
 
-use Illuminate\Console\Command;
+use Satoved\Lararalph\Contracts\ResolvedSpec;
+use Satoved\Lararalph\Contracts\SpecResolver;
 
 use function Laravel\Prompts\search;
 
-class SpecResolver
+class FileSpecResolver implements SpecResolver
 {
-    /**
-     * Resolve a spec from a command's argument, with interactive selection fallback.
-     *
-     * Returns [specPath, prdFile, spec] or null on failure (errors written to command).
-     */
-    public function resolveFromCommand(Command $command, string $label = 'Select a spec'): ?array
-    {
-        $spec = $command->argument('spec');
-
-        if (! $spec) {
-            $spec = $this->choose($label);
-            if (! $spec) {
-                $command->error('No specs found in specs/backlog/');
-
-                return null;
-            }
-        }
-
-        $specPath = $this->resolve($spec);
-        if (! $specPath) {
-            $command->error("Spec not found: {$spec}");
-
-            return null;
-        }
-
-        $prdFile = $specPath.'/PRD.md';
-        if (! file_exists($prdFile)) {
-            $command->error("PRD.md not found at: {$prdFile}");
-
-            return null;
-        }
-
-        return [
-            'specPath' => $specPath,
-            'prdFile' => $prdFile,
-            'spec' => basename($specPath),
-        ];
-    }
-
     public function choose(string $label = 'Select a spec'): ?string
     {
         $specs = $this->getBacklogSpecs();
@@ -78,7 +40,26 @@ class SpecResolver
         ));
     }
 
-    public function resolve(string $spec): ?string
+    public function resolve(string $spec): ?ResolvedSpec
+    {
+        $specPath = $this->findSpecPath($spec);
+        if (! $specPath) {
+            return null;
+        }
+
+        $prdFile = $specPath.'/PRD.md';
+        if (! file_exists($prdFile)) {
+            return null;
+        }
+
+        return new ResolvedSpec(
+            spec: basename($specPath),
+            specPath: $specPath,
+            prdFile: $prdFile,
+        );
+    }
+
+    private function findSpecPath(string $spec): ?string
     {
         $backlogDir = getcwd().'/specs/backlog';
         $completeDir = getcwd().'/specs/complete';

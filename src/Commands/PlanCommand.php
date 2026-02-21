@@ -4,7 +4,7 @@ namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
 use Satoved\Lararalph\AgentRunner;
-use Satoved\Lararalph\SpecResolver;
+use Satoved\Lararalph\Contracts\SpecResolver;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 class PlanCommand extends Command
@@ -18,12 +18,24 @@ class PlanCommand extends Command
 
     public function handle(SpecResolver $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator)
     {
-        $resolved = $specs->resolveFromCommand($this, 'Select a spec to plan');
+        $specName = $this->argument('spec');
+        if (! $specName) {
+            $specName = $specs->choose('Select a spec to plan');
+            if (! $specName) {
+                $this->error('No specs found in specs/backlog/');
+
+                return 1;
+            }
+        }
+
+        $resolved = $specs->resolve($specName);
         if (! $resolved) {
+            $this->error("Spec not found or PRD.md missing: {$specName}");
+
             return 1;
         }
 
-        $planFile = $resolved['specPath'].'/IMPLEMENTATION_PLAN.md';
+        $planFile = $resolved->specPath.'/IMPLEMENTATION_PLAN.md';
 
         if (file_exists($planFile) && ! $this->option('force')) {
             $this->error("IMPLEMENTATION_PLAN.md already exists at: {$planFile}");
@@ -36,19 +48,19 @@ class PlanCommand extends Command
 
         if ($this->option('create-worktree')) {
             $this->info('Creating worktree...');
-            $cwd = $worktreeCreator->create($resolved['spec']);
+            $cwd = $worktreeCreator->create($resolved->spec);
             $this->info("Worktree created: {$cwd}");
         }
 
-        $this->info('Creating implementation plan for: '.$resolved['spec']);
+        $this->info('Creating implementation plan for: '.$resolved->spec);
         $this->newLine();
 
         $prompt = view('lararalph::prompts.plan', [
-            'prdFilePath' => $resolved['prdFile'],
+            'prdFilePath' => $resolved->prdFile,
             'planFilePath' => file_exists($planFile) ? $planFile : null,
         ])->render();
 
-        $exitCode = $runner->run($resolved['spec'], $prompt, 1, $cwd);
+        $exitCode = $runner->run($resolved->spec, $prompt, 1, $cwd);
 
         if ($exitCode === 0) {
             $this->newLine();

@@ -1,6 +1,7 @@
 <?php
 
-use Satoved\Lararalph\SpecResolver;
+use Satoved\Lararalph\Contracts\ResolvedSpec;
+use Satoved\Lararalph\FileSpecResolver;
 
 beforeEach(function () {
     $this->tempDir = realpath(sys_get_temp_dir()).'/lararalph-spec-test-'.uniqid();
@@ -10,7 +11,7 @@ beforeEach(function () {
     $this->originalCwd = getcwd();
     chdir($this->tempDir);
 
-    $this->resolver = new SpecResolver;
+    $this->resolver = new FileSpecResolver;
 });
 
 afterEach(function () {
@@ -60,106 +61,75 @@ describe('getBacklogSpecs', function () {
 describe('resolve', function () {
     it('resolves exact match in backlog', function () {
         mkdir($this->tempDir.'/specs/backlog/my-feature', 0755, true);
+        file_put_contents($this->tempDir.'/specs/backlog/my-feature/PRD.md', '# PRD');
 
         $result = $this->resolver->resolve('my-feature');
 
-        expect($result)->toBe($this->tempDir.'/specs/backlog/my-feature');
+        expect($result)->toBeInstanceOf(ResolvedSpec::class)
+            ->and($result->spec)->toBe('my-feature')
+            ->and($result->specPath)->toBe($this->tempDir.'/specs/backlog/my-feature')
+            ->and($result->prdFile)->toBe($this->tempDir.'/specs/backlog/my-feature/PRD.md');
     });
 
     it('resolves exact match in complete', function () {
         mkdir($this->tempDir.'/specs/complete/my-feature', 0755, true);
+        file_put_contents($this->tempDir.'/specs/complete/my-feature/PRD.md', '# PRD');
 
         $result = $this->resolver->resolve('my-feature');
 
-        expect($result)->toBe($this->tempDir.'/specs/complete/my-feature');
+        expect($result)->toBeInstanceOf(ResolvedSpec::class)
+            ->and($result->specPath)->toBe($this->tempDir.'/specs/complete/my-feature');
     });
 
     it('prefers backlog over complete for exact match', function () {
         mkdir($this->tempDir.'/specs/backlog/my-feature', 0755, true);
+        file_put_contents($this->tempDir.'/specs/backlog/my-feature/PRD.md', '# PRD');
         mkdir($this->tempDir.'/specs/complete/my-feature', 0755, true);
+        file_put_contents($this->tempDir.'/specs/complete/my-feature/PRD.md', '# PRD');
 
         $result = $this->resolver->resolve('my-feature');
 
-        expect($result)->toBe($this->tempDir.'/specs/backlog/my-feature');
+        expect($result->specPath)->toBe($this->tempDir.'/specs/backlog/my-feature');
     });
 
     it('resolves date-prefixed spec by name suffix', function () {
         mkdir($this->tempDir.'/specs/backlog/2025-01-15-my-feature', 0755, true);
+        file_put_contents($this->tempDir.'/specs/backlog/2025-01-15-my-feature/PRD.md', '# PRD');
 
         $result = $this->resolver->resolve('my-feature');
 
-        expect($result)->toBe($this->tempDir.'/specs/backlog/2025-01-15-my-feature');
+        expect($result)->toBeInstanceOf(ResolvedSpec::class)
+            ->and($result->spec)->toBe('2025-01-15-my-feature')
+            ->and($result->specPath)->toBe($this->tempDir.'/specs/backlog/2025-01-15-my-feature');
     });
 
     it('resolves partial match in date-prefixed spec', function () {
         mkdir($this->tempDir.'/specs/backlog/2025-01-15-my-feature', 0755, true);
+        file_put_contents($this->tempDir.'/specs/backlog/2025-01-15-my-feature/PRD.md', '# PRD');
 
         $result = $this->resolver->resolve('my-feat');
 
-        expect($result)->toBe($this->tempDir.'/specs/backlog/2025-01-15-my-feature');
+        expect($result)->toBeInstanceOf(ResolvedSpec::class)
+            ->and($result->specPath)->toBe($this->tempDir.'/specs/backlog/2025-01-15-my-feature');
     });
 
     it('resolves date-prefixed spec in complete directory', function () {
         mkdir($this->tempDir.'/specs/complete/2025-03-20-done-feature', 0755, true);
+        file_put_contents($this->tempDir.'/specs/complete/2025-03-20-done-feature/PRD.md', '# PRD');
 
         $result = $this->resolver->resolve('done-feature');
 
-        expect($result)->toBe($this->tempDir.'/specs/complete/2025-03-20-done-feature');
+        expect($result)->toBeInstanceOf(ResolvedSpec::class)
+            ->and($result->specPath)->toBe($this->tempDir.'/specs/complete/2025-03-20-done-feature');
     });
 
     it('returns null for nonexistent spec', function () {
         expect($this->resolver->resolve('nonexistent'))->toBeNull();
     });
-});
 
-describe('resolveFromCommand', function () {
-    it('resolves spec from command argument', function () {
-        mkdir($this->tempDir.'/specs/backlog/my-feature', 0755, true);
-        file_put_contents($this->tempDir.'/specs/backlog/my-feature/PRD.md', '# PRD');
-
-        $command = Mockery::mock(\Illuminate\Console\Command::class);
-        $command->shouldReceive('argument')->with('spec')->andReturn('my-feature');
-
-        $result = $this->resolver->resolveFromCommand($command);
-
-        expect($result)->toBe([
-            'specPath' => $this->tempDir.'/specs/backlog/my-feature',
-            'prdFile' => $this->tempDir.'/specs/backlog/my-feature/PRD.md',
-            'spec' => 'my-feature',
-        ]);
-    });
-
-    it('returns null and shows error when spec not found', function () {
-        $command = Mockery::mock(\Illuminate\Console\Command::class);
-        $command->shouldReceive('argument')->with('spec')->andReturn('nonexistent');
-        $command->shouldReceive('error')->once()->with('Spec not found: nonexistent');
-
-        $result = $this->resolver->resolveFromCommand($command);
-
-        expect($result)->toBeNull();
-    });
-
-    it('returns null and shows error when PRD.md is missing', function () {
+    it('returns null when PRD.md is missing', function () {
         mkdir($this->tempDir.'/specs/backlog/no-prd', 0755, true);
 
-        $command = Mockery::mock(\Illuminate\Console\Command::class);
-        $command->shouldReceive('argument')->with('spec')->andReturn('no-prd');
-        $command->shouldReceive('error')->once()->with(Mockery::pattern('/PRD\.md not found/'));
-
-        $result = $this->resolver->resolveFromCommand($command);
-
-        expect($result)->toBeNull();
-    });
-
-    it('returns null when no specs available and no argument given', function () {
-        rmdir($this->tempDir.'/specs/backlog');
-
-        $command = Mockery::mock(\Illuminate\Console\Command::class);
-        $command->shouldReceive('argument')->with('spec')->andReturn(null);
-        $command->shouldReceive('error')->once()->with('No specs found in specs/backlog/');
-
-        $result = $this->resolver->resolveFromCommand($command);
-
-        expect($result)->toBeNull();
+        expect($this->resolver->resolve('no-prd'))->toBeNull();
     });
 });

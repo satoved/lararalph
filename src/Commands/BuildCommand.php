@@ -4,7 +4,7 @@ namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
 use Satoved\Lararalph\AgentRunner;
-use Satoved\Lararalph\SpecResolver;
+use Satoved\Lararalph\Contracts\SpecResolver;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 class BuildCommand extends Command
@@ -18,16 +18,28 @@ class BuildCommand extends Command
 
     public function handle(SpecResolver $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator)
     {
-        $resolved = $specs->resolveFromCommand($this);
+        $specName = $this->argument('spec');
+        if (! $specName) {
+            $specName = $specs->choose();
+            if (! $specName) {
+                $this->error('No specs found in specs/backlog/');
+
+                return 1;
+            }
+        }
+
+        $resolved = $specs->resolve($specName);
         if (! $resolved) {
+            $this->error("Spec not found or PRD.md missing: {$specName}");
+
             return 1;
         }
 
-        $planFile = $resolved['specPath'].'/IMPLEMENTATION_PLAN.md';
+        $planFile = $resolved->specPath.'/IMPLEMENTATION_PLAN.md';
         if (! file_exists($planFile)) {
             $this->error("IMPLEMENTATION_PLAN.md not found at: {$planFile}");
             $this->newLine();
-            $this->info("Run 'php artisan ralph:plan {$resolved['spec']}' first to create an implementation plan.");
+            $this->info("Run 'php artisan ralph:plan {$resolved->spec}' first to create an implementation plan.");
 
             return 1;
         }
@@ -36,18 +48,18 @@ class BuildCommand extends Command
 
         if ($this->option('create-worktree')) {
             $this->info('Creating worktree...');
-            $cwd = $worktreeCreator->create($resolved['spec']);
+            $cwd = $worktreeCreator->create($resolved->spec);
             $this->info("Worktree created: {$cwd}");
         }
 
-        $this->info("Building: {$resolved['spec']}");
+        $this->info("Building: {$resolved->spec}");
         $this->newLine();
 
         $prompt = view('lararalph::prompts.build', [
-            'prdFilePath' => $resolved['prdFile'],
+            'prdFilePath' => $resolved->prdFile,
             'planFilePath' => $planFile,
         ])->render();
 
-        return $runner->run($resolved['spec'], $prompt, (int) $this->option('iterations'), $cwd);
+        return $runner->run($resolved->spec, $prompt, (int) $this->option('iterations'), $cwd);
     }
 }
