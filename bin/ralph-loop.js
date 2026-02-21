@@ -7,6 +7,7 @@ const readline = require('readline');
 
 // Logging setup
 let logStream = null;
+let jsonStream = null;
 
 function initLogging(prdPath) {
   // Create logs directory inside the project's prd folder
@@ -18,6 +19,9 @@ function initLogging(prdPath) {
   const logFile = path.join(logsDir, `${timestamp}.log`);
 
   logStream = fs.createWriteStream(logFile, { flags: 'a' });
+
+  const jsonFile = path.join(logsDir, `${timestamp}.json`);
+  jsonStream = fs.createWriteStream(jsonFile, { flags: 'a' });
 
   // Write header
   logStream.write(`Ralph Loop Log\n`);
@@ -53,6 +57,9 @@ function closeLogging() {
   if (logStream) {
     logStream.write(`\nEnded: ${new Date().toISOString()}\n`);
     logStream.end();
+  }
+  if (jsonStream) {
+    jsonStream.end();
   }
 }
 
@@ -213,6 +220,11 @@ async function runClaudeStreaming(prompt) {
 
     rl.on('line', (line) => {
       if (!line.trim()) return;
+
+      // Write raw JSON line to json log
+      if (jsonStream) {
+        jsonStream.write(line + '\n');
+      }
 
       try {
         const message = JSON.parse(line);
