@@ -3,8 +3,8 @@
 namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
-use Satoved\Lararalph\Actions\ChooseSpec;
 use Satoved\Lararalph\AgentRunner;
+use Satoved\Lararalph\Contracts\SearchesSpec;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
 use Satoved\Lararalph\Exceptions\NoBacklogSpecs;
@@ -22,7 +22,7 @@ class PlanCommand extends Command
 
     protected $description = 'Create an implementation plan for a PRD by analyzing the codebase';
 
-    public function handle(SpecRepository $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator, ChooseSpec $chooseSpec)
+    public function handle(SpecRepository $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator, SearchesSpec $chooseSpec)
     {
         try {
             $specName = $this->argument('spec');

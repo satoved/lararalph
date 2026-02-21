@@ -3,8 +3,8 @@
 namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
-use Satoved\Lararalph\Actions\ChooseSpec;
 use Satoved\Lararalph\AgentRunner;
+use Satoved\Lararalph\Contracts\SearchesSpec;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
 use Satoved\Lararalph\Exceptions\NoBacklogSpecs;
@@ -22,7 +22,7 @@ class BuildCommand extends Command
 
     protected $description = 'Start an agent build session to work through a PRD and implementation plan';
 
-    public function handle(SpecRepository $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator, ChooseSpec $chooseSpec)
+    public function handle(SpecRepository $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator, SearchesSpec $chooseSpec)
     {
         try {
             $specName = $this->argument('spec');

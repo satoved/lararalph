@@ -2,13 +2,14 @@
 
 namespace Satoved\Lararalph\Actions;
 
+use Satoved\Lararalph\Contracts\SearchesSpec;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
 use Satoved\Lararalph\Exceptions\NoBacklogSpecs;
 
 use function Laravel\Prompts\search;
 
-class ChooseSpec
+class SearchSpec implements SearchesSpec
 {
     public function __construct(
         private readonly SpecRepository $specs,
