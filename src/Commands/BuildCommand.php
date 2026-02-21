@@ -69,7 +69,7 @@ class BuildCommand extends Command
 
         $exitCode = $runner->run($resolved->name, $prompt, (int) $this->option('iterations'), $cwd);
 
-        if ($exitCode === 0) {
+        if ($exitCode === self::SUCCESS) {
             $specs->complete($resolved);
             $this->info("Spec '{$resolved->name}' moved to complete.");
         }

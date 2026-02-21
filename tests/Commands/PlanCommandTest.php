@@ -3,7 +3,10 @@
 use Satoved\Lararalph\AgentRunner;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
+use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
+use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
+use Satoved\Lararalph\Tests\Fakes\FakeSpecRepository;
 
 beforeEach(function () {
     $this->specDir = sys_get_temp_dir().'/lararalph-test-'.uniqid();
@@ -26,11 +29,7 @@ afterEach(function () {
 });
 
 it('creates a plan successfully when no plan exists', function () {
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')
-        ->once()
-        ->with('test-spec')
-        ->andReturn($this->resolved);
+    $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -46,9 +45,7 @@ it('creates a plan successfully when no plan exists', function () {
 });
 
 it('fails when spec folder does not exist', function () {
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->with('nonexistent')
-        ->andThrow(new Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist);
+    $specs = new FakeSpecRepository(resolveException: new SpecFolderDoesNotExist);
     $this->app->instance(SpecRepository::class, $specs);
 
     $this->artisan('ralph:plan', ['spec' => 'nonexistent'])
@@ -57,9 +54,7 @@ it('fails when spec folder does not exist', function () {
 });
 
 it('fails when spec folder does not contain PRD file', function () {
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->with('no-prd')
-        ->andThrow(new Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile);
+    $specs = new FakeSpecRepository(resolveException: new SpecFolderDoesNotContainPrdFile);
     $this->app->instance(SpecRepository::class, $specs);
 
     $this->artisan('ralph:plan', ['spec' => 'no-prd'])
@@ -80,8 +75,7 @@ it('fails when no specs available and no argument given', function () {
 it('fails when plan already exists without force', function () {
     file_put_contents($this->specDir.'/IMPLEMENTATION_PLAN.md', '# Existing Plan');
 
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $this->artisan('ralph:plan', ['spec' => 'test-spec'])
@@ -93,8 +87,7 @@ it('fails when plan already exists without force', function () {
 it('regenerates plan with force flag', function () {
     file_put_contents($this->specDir.'/IMPLEMENTATION_PLAN.md', '# Existing Plan');
 
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -109,8 +102,7 @@ it('regenerates plan with force flag', function () {
 it('passes existing plan file path to prompt when forcing regeneration', function () {
     file_put_contents($this->specDir.'/IMPLEMENTATION_PLAN.md', '# Existing Plan');
 
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -128,8 +120,7 @@ it('passes existing plan file path to prompt when forcing regeneration', functio
 });
 
 it('shows success message when plan file is created', function () {
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -148,8 +139,7 @@ it('shows success message when plan file is created', function () {
 });
 
 it('shows warning when runner succeeds but plan file not created', function () {
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -162,8 +152,7 @@ it('shows warning when runner succeeds but plan file not created', function () {
 });
 
 it('propagates runner exit code on failure', function () {
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -175,8 +164,7 @@ it('propagates runner exit code on failure', function () {
 });
 
 it('always runs with 1 iteration', function () {
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
@@ -191,8 +179,7 @@ it('always runs with 1 iteration', function () {
 });
 
 it('creates worktree and passes cwd to runner when --create-worktree is set', function () {
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $worktreeCreator = Mockery::mock(WorktreeCreator::class);
@@ -216,8 +203,7 @@ it('creates worktree and passes cwd to runner when --create-worktree is set', fu
 });
 
 it('does not create worktree without --create-worktree flag', function () {
-    $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
+    $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
     $worktreeCreator = Mockery::mock(WorktreeCreator::class);
