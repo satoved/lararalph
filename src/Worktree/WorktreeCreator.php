@@ -14,13 +14,18 @@ class WorktreeCreator
         return dirname(base_path()).'/'.$projectName.'-'.$spec;
     }
 
+    public function getBranchName(string $spec): string
+    {
+        return "ralph/{$spec}";
+    }
+
     public function create(string $spec): string
     {
         $worktreePath = $this->getWorktreePath($spec);
 
         if (! is_dir($worktreePath)) {
             $escapedPath = escapeshellarg($worktreePath);
-            $escapedBranch = escapeshellarg($spec);
+            $escapedBranch = escapeshellarg($this->getBranchName($spec));
 
             $basePath = escapeshellarg(base_path());
             exec("cd {$basePath} && git worktree add -b {$escapedBranch} {$escapedPath} 2>&1", $output, $exitCode);

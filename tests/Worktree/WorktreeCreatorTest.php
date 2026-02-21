@@ -84,6 +84,13 @@ it('reuses existing worktree path (idempotent)', function () {
     expect(is_dir($path1))->toBeTrue();
 });
 
+it('prefixes branch name with ralph/', function () {
+    $creator = new WorktreeCreator;
+
+    expect($creator->getBranchName('2025-05-01-feature-name'))
+        ->toBe('ralph/2025-05-01-feature-name');
+});
+
 it('throws RuntimeException on git failure', function () {
     // Point to a non-git directory
     $nonGitDir = sys_get_temp_dir().'/lararalph-nongit-'.uniqid();
