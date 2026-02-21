@@ -3,8 +3,8 @@
 namespace Satoved\Lararalph;
 
 use Satoved\Lararalph\Commands\BuildCommand;
-use Satoved\Lararalph\Commands\PlanCommand;
 use Satoved\Lararalph\Commands\FinishCommand;
+use Satoved\Lararalph\Commands\PlanCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 

@@ -5,16 +5,18 @@ namespace Satoved\Lararalph\Commands;
 use Illuminate\Console\Command;
 use Satoved\Lararalph\AgentRunner;
 use Satoved\Lararalph\SpecResolver;
+use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 class PlanCommand extends Command
 {
     protected $signature = 'ralph:plan
                             {spec? : The spec name to plan (interactive if not provided)}
-                            {--force : Regenerate IMPLEMENTATION_PLAN.md even if it exists}';
+                            {--force : Regenerate IMPLEMENTATION_PLAN.md even if it exists}
+                            {--create-worktree : Create a git worktree for isolated work}';
 
     protected $description = 'Create an implementation plan for a PRD by analyzing the codebase';
 
-    public function handle(SpecResolver $specs, AgentRunner $runner)
+    public function handle(SpecResolver $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator)
     {
         $resolved = $specs->resolveFromCommand($this, 'Select a spec to plan');
         if (! $resolved) {
@@ -30,6 +32,14 @@ class PlanCommand extends Command
             return 1;
         }
 
+        $cwd = null;
+
+        if ($this->option('create-worktree')) {
+            $this->info('Creating worktree...');
+            $cwd = $worktreeCreator->create($resolved['spec']);
+            $this->info("Worktree created: {$cwd}");
+        }
+
         $this->info('Creating implementation plan for: '.$resolved['spec']);
         $this->newLine();
 
@@ -38,7 +48,7 @@ class PlanCommand extends Command
             'planFilePath' => file_exists($planFile) ? $planFile : null,
         ])->render();
 
-        $exitCode = $runner->run($resolved['spec'], $prompt, 1);
+        $exitCode = $runner->run($resolved['spec'], $prompt, 1, $cwd);
 
         if ($exitCode === 0) {
             $this->newLine();

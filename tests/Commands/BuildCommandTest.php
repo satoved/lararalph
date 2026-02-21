@@ -2,6 +2,7 @@
 
 use Satoved\Lararalph\AgentRunner;
 use Satoved\Lararalph\SpecResolver;
+use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 beforeEach(function () {
     $this->specDir = sys_get_temp_dir().'/lararalph-test-'.uniqid();
@@ -31,7 +32,7 @@ it('runs build successfully with all files present', function () {
     $runner = Mockery::mock(AgentRunner::class);
     $runner->shouldReceive('run')
         ->once()
-        ->with('test-spec', Mockery::type('string'), 30)
+        ->with('test-spec', Mockery::type('string'), 30, null)
         ->andReturn(0);
     $this->app->instance(AgentRunner::class, $runner);
 
@@ -48,7 +49,7 @@ it('passes custom iterations to runner', function () {
     $runner = Mockery::mock(AgentRunner::class);
     $runner->shouldReceive('run')
         ->once()
-        ->with('test-spec', Mockery::type('string'), 10)
+        ->with('test-spec', Mockery::type('string'), 10, null)
         ->andReturn(0);
     $this->app->instance(AgentRunner::class, $runner);
 
@@ -74,7 +75,7 @@ it('fails when implementation plan is missing', function () {
 
     $this->artisan('ralph:build', ['spec' => 'test-spec'])
         ->expectsOutputToContain('IMPLEMENTATION_PLAN.md not found')
-        ->expectsOutputToContain("ralph:plan test-spec")
+        ->expectsOutputToContain('ralph:plan test-spec')
         ->assertExitCode(1);
 });
 
@@ -108,4 +109,49 @@ it('propagates runner exit code', function () {
 
     $this->artisan('ralph:build', ['spec' => 'test-spec'])
         ->assertExitCode(2);
+});
+
+it('creates worktree and passes cwd to runner when --create-worktree is set', function () {
+    $specs = Mockery::mock(SpecResolver::class);
+    $specs->shouldReceive('resolveFromCommand')->once()->andReturn($this->resolved);
+    $this->app->instance(SpecResolver::class, $specs);
+
+    $worktreeCreator = Mockery::mock(WorktreeCreator::class);
+    $worktreeCreator->shouldReceive('create')
+        ->once()
+        ->with('test-spec')
+        ->andReturn('/tmp/myapp-test-spec');
+    $this->app->instance(WorktreeCreator::class, $worktreeCreator);
+
+    $runner = Mockery::mock(AgentRunner::class);
+    $runner->shouldReceive('run')
+        ->once()
+        ->with('test-spec', Mockery::type('string'), 30, '/tmp/myapp-test-spec')
+        ->andReturn(0);
+    $this->app->instance(AgentRunner::class, $runner);
+
+    $this->artisan('ralph:build', ['spec' => 'test-spec', '--create-worktree' => true])
+        ->expectsOutputToContain('Creating worktree...')
+        ->expectsOutputToContain('Worktree created: /tmp/myapp-test-spec')
+        ->assertExitCode(0);
+});
+
+it('does not create worktree without --create-worktree flag', function () {
+    $specs = Mockery::mock(SpecResolver::class);
+    $specs->shouldReceive('resolveFromCommand')->once()->andReturn($this->resolved);
+    $this->app->instance(SpecResolver::class, $specs);
+
+    $worktreeCreator = Mockery::mock(WorktreeCreator::class);
+    $worktreeCreator->shouldNotReceive('create');
+    $this->app->instance(WorktreeCreator::class, $worktreeCreator);
+
+    $runner = Mockery::mock(AgentRunner::class);
+    $runner->shouldReceive('run')
+        ->once()
+        ->with('test-spec', Mockery::type('string'), 30, null)
+        ->andReturn(0);
+    $this->app->instance(AgentRunner::class, $runner);
+
+    $this->artisan('ralph:build', ['spec' => 'test-spec'])
+        ->assertExitCode(0);
 });

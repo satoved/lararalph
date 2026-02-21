@@ -1,14 +1,17 @@
 <?php
 
-return [
-    'ide' => 'open -na "PhpStorm.app" --args {path}', // or 'code {path}' for VSCode
+use Satoved\Lararalph\Worktree\Steps\CopyEnvFile;
+use Satoved\Lararalph\Worktree\Steps\OpenInPHPStorm;
+use Satoved\Lararalph\Worktree\Steps\RunHerdSecure;
+use Satoved\Lararalph\Worktree\Steps\RunInstallComposer;
+use Satoved\Lararalph\Worktree\Steps\RunInstallNpm;
 
-    'worktree' => [
-        'setup_commands' => array_filter(
-            explode(
-                ',',
-                env('LARARALPH_WORKTREE_SETUP_COMMANDS', 'composer install,npm install,herd secure') // or 'composer install,yarn install,valet secure'
-            )
-        ),
+return [
+    'worktree_setup' => [
+        CopyEnvFile::class,
+        RunInstallComposer::class,
+        RunInstallNpm::class,
+        RunHerdSecure::class,
+        OpenInPHPStorm::class,
     ],
 ];

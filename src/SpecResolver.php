@@ -46,6 +46,7 @@ class SpecResolver
             'spec' => basename($specPath),
         ];
     }
+
     public function choose(string $label = 'Select a spec'): ?string
     {
         $specs = $this->getBacklogSpecs();

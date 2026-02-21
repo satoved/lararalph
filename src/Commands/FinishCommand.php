@@ -50,7 +50,7 @@ class FinishCommand extends Command
 
         foreach ($selected as $path) {
             $this->info("Removing worktree: {$path}");
-            passthru("cd {$repoPath} && git worktree remove --force " . escapeshellarg($path), $exitCode);
+            passthru("cd {$repoPath} && git worktree remove --force ".escapeshellarg($path), $exitCode);
 
             if ($exitCode !== 0) {
                 $this->error("Failed to remove worktree: {$path}");

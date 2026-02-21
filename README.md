@@ -105,10 +105,11 @@ Each loop iteration: Claude reads the plan, picks the most important unchecked t
 
 ## Worktrees
 
-Use `--worktree` on `ralph:build` to run in an isolated git worktree:
+Use `--create-worktree` on `ralph:plan` or `ralph:build` to run in an isolated git worktree:
 
 ```bash
-php artisan ralph:build 2026-01-15-user-notifications --worktree
+php artisan ralph:plan 2026-01-15-user-notifications --create-worktree
+php artisan ralph:build 2026-01-15-user-notifications --create-worktree
 ```
 
 This creates a sibling directory (e.g., `../myapp-2026-01-15-user-notifications/`), copies `.env` with adjusted URLs, and runs setup commands (`composer install`, etc).
@@ -129,6 +130,7 @@ php artisan vendor:publish --tag="lararalph-config"
 ```php
 return [
     'worktree_setup' => [
+        CopyEnvFile::class,
         RunInstallComposer::class,
         RunInstallNpm::class,
         RunHerdSecure::class,
