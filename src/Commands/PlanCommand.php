@@ -7,6 +7,7 @@ use Satoved\Lararalph\Actions\ChooseSpec;
 use Satoved\Lararalph\AgentRunner;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
+use Satoved\Lararalph\Exceptions\NoBacklogSpecs;
 use Satoved\Lararalph\FileSpecRepository;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
@@ -22,27 +23,28 @@ class PlanCommand extends Command
     public function handle(SpecRepository $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator, ChooseSpec $chooseSpec)
     {
         $specName = $this->argument('spec');
-        if (! $specName) {
-            $specName = $chooseSpec('Select a spec to plan');
-            if (! $specName) {
+        if ($specName) {
+            $resolved = $specs->resolve($specName);
+            if (! $resolved) {
+                $this->error('Spec not found or '.Spec::PRD_FILENAME." missing: {$specName}");
+
+                return self::FAILURE;
+            }
+        } else {
+            try {
+                $resolved = $chooseSpec('Select a spec to plan');
+            } catch (NoBacklogSpecs) {
                 $this->error('No specs found in '.FileSpecRepository::BACKLOG_DIR.'/');
 
-                return 1;
+                return self::FAILURE;
             }
-        }
-
-        $resolved = $specs->resolve($specName);
-        if (! $resolved) {
-            $this->error('Spec not found or '.Spec::PRD_FILENAME." missing: {$specName}");
-
-            return 1;
         }
 
         if (file_exists($resolved->absolutePlanFilePath) && ! $this->option('force')) {
             $this->error(Spec::PLAN_FILENAME." already exists at: {$resolved->absolutePlanFilePath}");
             $this->info('Use --force to regenerate.');
 
-            return 1;
+            return self::FAILURE;
         }
 
         $cwd = null;
@@ -63,7 +65,7 @@ class PlanCommand extends Command
 
         $exitCode = $runner->run($resolved->name, $prompt, 1, $cwd);
 
-        if ($exitCode === 0) {
+        if ($exitCode === self::SUCCESS) {
             $this->newLine();
             if (file_exists($resolved->absolutePlanFilePath)) {
                 $this->info('Implementation plan created: '.$resolved->absolutePlanFilePath);

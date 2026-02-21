@@ -57,7 +57,7 @@ it('fails when spec resolution returns null', function () {
 
 it('fails when no specs available and no argument given', function () {
     $chooseSpec = Mockery::mock(Satoved\Lararalph\Actions\ChooseSpec::class);
-    $chooseSpec->shouldReceive('__invoke')->once()->with('Select a spec to plan')->andReturn(null);
+    $chooseSpec->shouldReceive('__invoke')->once()->with('Select a spec to plan')->andThrow(new Satoved\Lararalph\Exceptions\NoBacklogSpecs);
     $this->app->instance(Satoved\Lararalph\Actions\ChooseSpec::class, $chooseSpec);
 
     $this->artisan('ralph:plan')
