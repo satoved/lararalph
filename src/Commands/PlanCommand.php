@@ -8,6 +8,8 @@ use Satoved\Lararalph\AgentRunner;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
 use Satoved\Lararalph\Exceptions\NoBacklogSpecs;
+use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
+use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
 use Satoved\Lararalph\FileSpecRepository;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
@@ -22,22 +24,23 @@ class PlanCommand extends Command
 
     public function handle(SpecRepository $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator, ChooseSpec $chooseSpec)
     {
-        $specName = $this->argument('spec');
-        if ($specName) {
-            $resolved = $specs->resolve($specName);
-            if (! $resolved) {
-                $this->error('Spec not found or '.Spec::PRD_FILENAME." missing: {$specName}");
+        try {
+            $specName = $this->argument('spec');
+            $resolved = $specName
+                ? $specs->resolve($specName)
+                : $chooseSpec('Select a spec to plan');
+        } catch (NoBacklogSpecs) {
+            $this->error('No specs found in '.FileSpecRepository::BACKLOG_DIR.'/');
 
-                return self::FAILURE;
-            }
-        } else {
-            try {
-                $resolved = $chooseSpec('Select a spec to plan');
-            } catch (NoBacklogSpecs) {
-                $this->error('No specs found in '.FileSpecRepository::BACKLOG_DIR.'/');
+            return self::FAILURE;
+        } catch (SpecFolderDoesNotExist) {
+            $this->error("Spec folder not found: {$specName}");
 
-                return self::FAILURE;
-            }
+            return self::FAILURE;
+        } catch (SpecFolderDoesNotContainPrdFile) {
+            $this->error(Spec::PRD_FILENAME." missing for spec: {$specName}");
+
+            return self::FAILURE;
         }
 
         if (file_exists($resolved->absolutePlanFilePath) && ! $this->option('force')) {

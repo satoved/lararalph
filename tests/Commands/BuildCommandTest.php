@@ -62,13 +62,25 @@ it('passes custom iterations to runner', function () {
         ->assertExitCode(0);
 });
 
-it('fails when spec resolution returns null', function () {
+it('fails when spec folder does not exist', function () {
     $specs = Mockery::mock(SpecRepository::class);
-    $specs->shouldReceive('resolve')->once()->with('nonexistent')->andReturn(null);
+    $specs->shouldReceive('resolve')->once()->with('nonexistent')
+        ->andThrow(new Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist);
     $this->app->instance(SpecRepository::class, $specs);
 
     $this->artisan('ralph:build', ['spec' => 'nonexistent'])
-        ->expectsOutputToContain('Spec not found or PRD.md missing: nonexistent')
+        ->expectsOutputToContain('Spec folder not found: nonexistent')
+        ->assertExitCode(1);
+});
+
+it('fails when spec folder does not contain PRD file', function () {
+    $specs = Mockery::mock(SpecRepository::class);
+    $specs->shouldReceive('resolve')->once()->with('no-prd')
+        ->andThrow(new Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile);
+    $this->app->instance(SpecRepository::class, $specs);
+
+    $this->artisan('ralph:build', ['spec' => 'no-prd'])
+        ->expectsOutputToContain('PRD.md missing for spec: no-prd')
         ->assertExitCode(1);
 });
 

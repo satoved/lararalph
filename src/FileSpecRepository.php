@@ -4,6 +4,8 @@ namespace Satoved\Lararalph;
 
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
+use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
+use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
 
 class FileSpecRepository implements SpecRepository
 {
@@ -24,16 +26,16 @@ class FileSpecRepository implements SpecRepository
         ));
     }
 
-    public function resolve(string $spec): ?Spec
+    public function resolve(string $spec): Spec
     {
         $specPath = $this->findSpecPath($spec);
         if (! $specPath) {
-            return null;
+            throw new SpecFolderDoesNotExist("Spec folder not found: {$spec}");
         }
 
         $prdFile = $specPath.'/'.Spec::PRD_FILENAME;
         if (! file_exists($prdFile)) {
-            return null;
+            throw new SpecFolderDoesNotContainPrdFile("PRD file missing in spec folder: {$specPath}");
         }
 
         return new Spec(

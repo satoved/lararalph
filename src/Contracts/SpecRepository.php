@@ -9,9 +9,11 @@ interface SpecRepository
 
     /**
      * Resolve a spec name to a Spec.
-     * Validates the PRD file exists. Returns null if spec not found or PRD missing.
+     *
+     * @throws \Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist
+     * @throws \Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile
      */
-    public function resolve(string $spec): ?Spec;
+    public function resolve(string $spec): Spec;
 
     /** Move a completed spec from backlog to complete. */
     public function complete(Spec $spec): void;

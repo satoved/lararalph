@@ -1,6 +1,8 @@
 <?php
 
 use Satoved\Lararalph\Contracts\Spec;
+use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
+use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
 use Satoved\Lararalph\FileSpecRepository;
 
 beforeEach(function () {
@@ -94,14 +96,16 @@ describe('resolve', function () {
             ->and($result->absoluteFolderPath)->toBe($this->tempDir.'/specs/backlog/2025-01-15-my-feature');
     });
 
-    it('returns null for nonexistent spec', function () {
-        expect($this->resolver->resolve('nonexistent'))->toBeNull();
+    it('throws SpecFolderDoesNotExist for nonexistent spec', function () {
+        expect(fn () => $this->resolver->resolve('nonexistent'))
+            ->toThrow(SpecFolderDoesNotExist::class);
     });
 
-    it('returns null when PRD is missing', function () {
+    it('throws SpecFolderDoesNotContainPrdFile when PRD is missing', function () {
         mkdir($this->tempDir.'/specs/backlog/no-prd', 0755, true);
 
-        expect($this->resolver->resolve('no-prd'))->toBeNull();
+        expect(fn () => $this->resolver->resolve('no-prd'))
+            ->toThrow(SpecFolderDoesNotContainPrdFile::class);
     });
 });
 
