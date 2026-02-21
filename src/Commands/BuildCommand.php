@@ -3,7 +3,8 @@
 namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
-use Satoved\Lararalph\AgentRunner;
+use Satoved\Lararalph\LoopRunner;
+use Satoved\Lararalph\LoopRunnerResult;
 use Satoved\Lararalph\Contracts\SearchesSpec;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
@@ -22,13 +23,13 @@ class BuildCommand extends Command
 
     protected $description = 'Start an agent build session to work through a PRD and implementation plan';
 
-    public function handle(SpecRepository $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator, SearchesSpec $chooseSpec)
+    public function handle(SpecRepository $specs, LoopRunner $runner, WorktreeCreator $worktreeCreator, SearchesSpec $chooseSpec)
     {
         try {
             $specName = $this->argument('spec');
             $resolved = $specName
                 ? $specs->resolve($specName)
-                : $chooseSpec();
+                : $chooseSpec('Select a spec to build');
         } catch (NoBacklogSpecs) {
             $this->error('No specs found in '.FileSpecRepository::BACKLOG_DIR.'/');
 
@@ -67,13 +68,13 @@ class BuildCommand extends Command
             'planFilePath' => $resolved->absolutePlanFilePath,
         ])->render();
 
-        $exitCode = $runner->run($resolved->name, $prompt, (int) $this->option('iterations'), $cwd);
+        $result = $runner->run($resolved, $prompt, (int) $this->option('iterations'), $cwd);
 
-        if ($exitCode === self::SUCCESS) {
+        if ($result === LoopRunnerResult::Complete) {
             $specs->complete($resolved);
             $this->info("Spec '{$resolved->name}' moved to complete.");
         }
 
-        return $exitCode;
+        return $result->value;
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
-use Satoved\Lararalph\AgentRunner;
+use Satoved\Lararalph\LoopRunner;
+use Satoved\Lararalph\LoopRunnerResult;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
@@ -32,12 +33,12 @@ it('creates a plan successfully when no plan exists', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(AgentRunner::class);
+    $runner = Mockery::mock(LoopRunner::class);
     $runner->shouldReceive('run')
         ->once()
-        ->with('test-spec', Mockery::type('string'), 1, null)
-        ->andReturn(0);
-    $this->app->instance(AgentRunner::class, $runner);
+        ->with(Mockery::type(Spec::class), Mockery::type('string'), 1, null)
+        ->andReturn(LoopRunnerResult::Complete);
+    $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:plan', ['spec' => 'test-spec'])
         ->expectsOutputToContain('Creating implementation plan for: test-spec')
@@ -94,9 +95,9 @@ it('regenerates plan with force flag', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(AgentRunner::class);
-    $runner->shouldReceive('run')->once()->with('test-spec', Mockery::type('string'), 1, null)->andReturn(0);
-    $this->app->instance(AgentRunner::class, $runner);
+    $runner = Mockery::mock(LoopRunner::class);
+    $runner->shouldReceive('run')->once()->with(Mockery::type(Spec::class), Mockery::type('string'), 1, null)->andReturn(LoopRunnerResult::Complete);
+    $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:plan', ['spec' => 'test-spec', '--force' => true])
         ->expectsOutputToContain('Creating implementation plan for: test-spec')
@@ -109,15 +110,15 @@ it('passes existing plan file path to prompt when forcing regeneration', functio
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(AgentRunner::class);
+    $runner = Mockery::mock(LoopRunner::class);
     $runner->shouldReceive('run')
         ->once()
         ->withArgs(function ($spec, $prompt, $iterations) {
             return str_contains($prompt, 'IMPLEMENTATION_PLAN.md')
                 && str_contains($prompt, 'Plan only. Do NOT implement anything');
         })
-        ->andReturn(0);
-    $this->app->instance(AgentRunner::class, $runner);
+        ->andReturn(LoopRunnerResult::Complete);
+    $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:plan', ['spec' => 'test-spec', '--force' => true])
         ->assertExitCode(0);
@@ -127,15 +128,15 @@ it('shows success message when plan file is created', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(AgentRunner::class);
+    $runner = Mockery::mock(LoopRunner::class);
     $runner->shouldReceive('run')
         ->once()
         ->andReturnUsing(function () {
             file_put_contents($this->specDir.'/IMPLEMENTATION_PLAN.md', '# New Plan');
 
-            return 0;
+            return LoopRunnerResult::Complete;
         });
-    $this->app->instance(AgentRunner::class, $runner);
+    $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:plan', ['spec' => 'test-spec'])
         ->expectsOutputToContain('Implementation plan created')
@@ -146,9 +147,9 @@ it('shows warning when runner succeeds but plan file not created', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(AgentRunner::class);
-    $runner->shouldReceive('run')->once()->andReturn(0);
-    $this->app->instance(AgentRunner::class, $runner);
+    $runner = Mockery::mock(LoopRunner::class);
+    $runner->shouldReceive('run')->once()->andReturn(LoopRunnerResult::Complete);
+    $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:plan', ['spec' => 'test-spec'])
         ->expectsOutputToContain('IMPLEMENTATION_PLAN.md was not created')
@@ -159,9 +160,9 @@ it('propagates runner exit code on failure', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(AgentRunner::class);
-    $runner->shouldReceive('run')->once()->andReturn(1);
-    $this->app->instance(AgentRunner::class, $runner);
+    $runner = Mockery::mock(LoopRunner::class);
+    $runner->shouldReceive('run')->once()->andReturn(LoopRunnerResult::Error);
+    $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:plan', ['spec' => 'test-spec'])
         ->assertExitCode(1);
@@ -171,12 +172,12 @@ it('always runs with 1 iteration', function () {
     $specs = new FakeSpecRepository(spec: $this->resolved);
     $this->app->instance(SpecRepository::class, $specs);
 
-    $runner = Mockery::mock(AgentRunner::class);
+    $runner = Mockery::mock(LoopRunner::class);
     $runner->shouldReceive('run')
         ->once()
-        ->with('test-spec', Mockery::type('string'), 1, null)
-        ->andReturn(0);
-    $this->app->instance(AgentRunner::class, $runner);
+        ->with(Mockery::type(Spec::class), Mockery::type('string'), 1, null)
+        ->andReturn(LoopRunnerResult::Complete);
+    $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:plan', ['spec' => 'test-spec'])
         ->assertExitCode(0);
@@ -193,12 +194,12 @@ it('creates worktree and passes cwd to runner when --create-worktree is set', fu
         ->andReturn('/tmp/myapp-test-spec');
     $this->app->instance(WorktreeCreator::class, $worktreeCreator);
 
-    $runner = Mockery::mock(AgentRunner::class);
+    $runner = Mockery::mock(LoopRunner::class);
     $runner->shouldReceive('run')
         ->once()
-        ->with('test-spec', Mockery::type('string'), 1, '/tmp/myapp-test-spec')
-        ->andReturn(0);
-    $this->app->instance(AgentRunner::class, $runner);
+        ->with(Mockery::type(Spec::class), Mockery::type('string'), 1, '/tmp/myapp-test-spec')
+        ->andReturn(LoopRunnerResult::Complete);
+    $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:plan', ['spec' => 'test-spec', '--create-worktree' => true])
         ->expectsOutputToContain('Creating worktree...')
@@ -214,12 +215,12 @@ it('does not create worktree without --create-worktree flag', function () {
     $worktreeCreator->shouldNotReceive('create');
     $this->app->instance(WorktreeCreator::class, $worktreeCreator);
 
-    $runner = Mockery::mock(AgentRunner::class);
+    $runner = Mockery::mock(LoopRunner::class);
     $runner->shouldReceive('run')
         ->once()
-        ->with('test-spec', Mockery::type('string'), 1, null)
-        ->andReturn(0);
-    $this->app->instance(AgentRunner::class, $runner);
+        ->with(Mockery::type(Spec::class), Mockery::type('string'), 1, null)
+        ->andReturn(LoopRunnerResult::Complete);
+    $this->app->instance(LoopRunner::class, $runner);
 
     $this->artisan('ralph:plan', ['spec' => 'test-spec'])
         ->assertExitCode(0);

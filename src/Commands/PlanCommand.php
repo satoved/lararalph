@@ -3,7 +3,8 @@
 namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
-use Satoved\Lararalph\AgentRunner;
+use Satoved\Lararalph\LoopRunner;
+use Satoved\Lararalph\LoopRunnerResult;
 use Satoved\Lararalph\Contracts\SearchesSpec;
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
@@ -22,7 +23,7 @@ class PlanCommand extends Command
 
     protected $description = 'Create an implementation plan for a PRD by analyzing the codebase';
 
-    public function handle(SpecRepository $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator, SearchesSpec $chooseSpec)
+    public function handle(SpecRepository $specs, LoopRunner $runner, WorktreeCreator $worktreeCreator, SearchesSpec $chooseSpec)
     {
         try {
             $specName = $this->argument('spec');
@@ -66,9 +67,9 @@ class PlanCommand extends Command
             'planFilePath' => $resolved->planFileExists() ? $resolved->absolutePlanFilePath : null,
         ])->render();
 
-        $exitCode = $runner->run($resolved->name, $prompt, 1, $cwd);
+        $result = $runner->run($resolved, $prompt, 1, $cwd);
 
-        if ($exitCode === self::SUCCESS) {
+        if ($result === LoopRunnerResult::Complete) {
             $this->newLine();
             if ($resolved->planFileExists()) {
                 $this->info('Implementation plan created: '.$resolved->absolutePlanFilePath);
@@ -78,6 +79,6 @@ class PlanCommand extends Command
             }
         }
 
-        return $exitCode;
+        return $result->value;
     }
 }
