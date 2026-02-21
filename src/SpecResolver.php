@@ -2,10 +2,50 @@
 
 namespace Satoved\Lararalph;
 
+use Illuminate\Console\Command;
+
 use function Laravel\Prompts\search;
 
 class SpecResolver
 {
+    /**
+     * Resolve a spec from a command's argument, with interactive selection fallback.
+     *
+     * Returns [specPath, prdFile, spec] or null on failure (errors written to command).
+     */
+    public function resolveFromCommand(Command $command, string $label = 'Select a spec'): ?array
+    {
+        $spec = $command->argument('spec');
+
+        if (! $spec) {
+            $spec = $this->choose($label);
+            if (! $spec) {
+                $command->error('No specs found in specs/backlog/');
+
+                return null;
+            }
+        }
+
+        $specPath = $this->resolve($spec);
+        if (! $specPath) {
+            $command->error("Spec not found: {$spec}");
+
+            return null;
+        }
+
+        $prdFile = $specPath.'/PRD.md';
+        if (! file_exists($prdFile)) {
+            $command->error("PRD.md not found at: {$prdFile}");
+
+            return null;
+        }
+
+        return [
+            'specPath' => $specPath,
+            'prdFile' => $prdFile,
+            'spec' => basename($specPath),
+        ];
+    }
     public function choose(string $label = 'Select a spec'): ?string
     {
         $specs = $this->getBacklogSpecs();

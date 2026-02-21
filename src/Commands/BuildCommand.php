@@ -16,55 +16,28 @@ class BuildCommand extends Command
 
     public function handle(SpecResolver $specs, AgentRunner $runner)
     {
-        $spec = $this->argument('spec');
-
-        if (! $spec) {
-            $spec = $specs->choose();
-            if (! $spec) {
-                $this->error('No specs found in specs/backlog/');
-
-                return 1;
-            }
-        }
-
-        $specPath = $specs->resolve($spec);
-        if (! $specPath) {
-            $this->error("Spec not found: {$spec}");
-            $this->info('Available specs in specs/backlog/:');
-            foreach ($specs->getBacklogSpecs() as $s) {
-                $this->line("  - {$s}");
-            }
-
+        $resolved = $specs->resolveFromCommand($this);
+        if (! $resolved) {
             return 1;
         }
 
-        $prdFile = $specPath.'/PRD.md';
-        $planFile = $specPath.'/IMPLEMENTATION_PLAN.md';
-
-        if (! file_exists($prdFile)) {
-            $this->error("PRD.md not found at: {$prdFile}");
-
-            return 1;
-        }
-
+        $planFile = $resolved['specPath'].'/IMPLEMENTATION_PLAN.md';
         if (! file_exists($planFile)) {
             $this->error("IMPLEMENTATION_PLAN.md not found at: {$planFile}");
             $this->newLine();
-            $this->info("Run 'php artisan ralph:plan {$spec}' first to create an implementation plan.");
+            $this->info("Run 'php artisan ralph:plan {$resolved['spec']}' first to create an implementation plan.");
 
             return 1;
         }
 
-        $spec = basename($specPath);
-
-        $this->info("Building: {$spec}");
+        $this->info("Building: {$resolved['spec']}");
         $this->newLine();
 
         $prompt = view('lararalph::prompts.build', [
-            'prdFilePath' => $prdFile,
+            'prdFilePath' => $resolved['prdFile'],
             'planFilePath' => $planFile,
         ])->render();
 
-        return $runner->run($spec, $prompt, (int) $this->option('iterations'));
+        return $runner->run($resolved['spec'], $prompt, (int) $this->option('iterations'));
     }
 }

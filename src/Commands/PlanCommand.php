@@ -16,53 +16,29 @@ class PlanCommand extends Command
 
     public function handle(SpecResolver $specs, AgentRunner $runner)
     {
-        $spec = $this->argument('spec');
-        $force = $this->option('force');
-
-        if (! $spec) {
-            $spec = $specs->choose('Select a spec to plan');
-            if (! $spec) {
-                $this->error('No specs found in specs/backlog/');
-
-                return 1;
-            }
-        }
-
-        $specPath = $specs->resolve($spec);
-        if (! $specPath) {
-            $this->error("Spec not found: {$spec}");
-            $this->info("Use '/prd' skill inside Claude to create a new spec first.");
-
+        $resolved = $specs->resolveFromCommand($this, 'Select a spec to plan');
+        if (! $resolved) {
             return 1;
         }
 
-        $prdFile = $specPath.'/PRD.md';
-        $planFile = $specPath.'/IMPLEMENTATION_PLAN.md';
+        $planFile = $resolved['specPath'].'/IMPLEMENTATION_PLAN.md';
 
-        if (! file_exists($prdFile)) {
-            $this->error("PRD.md not found at: {$prdFile}");
-
-            return 1;
-        }
-
-        if (file_exists($planFile) && ! $force) {
+        if (file_exists($planFile) && ! $this->option('force')) {
             $this->error("IMPLEMENTATION_PLAN.md already exists at: {$planFile}");
             $this->info('Use --force to regenerate.');
 
             return 1;
         }
 
-        $spec = basename($specPath);
-
-        $this->info('Creating implementation plan for: '.$spec);
+        $this->info('Creating implementation plan for: '.$resolved['spec']);
         $this->newLine();
 
         $prompt = view('lararalph::prompts.plan', [
-            'prdFilePath' => $prdFile,
+            'prdFilePath' => $resolved['prdFile'],
             'planFilePath' => file_exists($planFile) ? $planFile : null,
         ])->render();
 
-        $exitCode = $runner->run($spec, $prompt, 1);
+        $exitCode = $runner->run($resolved['spec'], $prompt, 1);
 
         if ($exitCode === 0) {
             $this->newLine();
