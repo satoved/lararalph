@@ -82,9 +82,13 @@ it('fails when spec folder does not contain PRD file', function () {
 });
 
 it('fails when no specs available and no argument given', function () {
-    $chooseSpec = Mockery::mock(Satoved\Lararalph\Contracts\SearchesSpec::class);
-    $chooseSpec->shouldReceive('__invoke')->once()->andThrow(new Satoved\Lararalph\Exceptions\NoBacklogSpecs);
-    $this->app->instance(Satoved\Lararalph\Contracts\SearchesSpec::class, $chooseSpec);
+    $this->app->instance(Satoved\Lararalph\Contracts\SearchesSpec::class, new class implements Satoved\Lararalph\Contracts\SearchesSpec
+    {
+        public function __invoke(string $label = 'Select a spec'): Satoved\Lararalph\Contracts\Spec
+        {
+            throw new Satoved\Lararalph\Exceptions\NoBacklogSpecs;
+        }
+    });
 
     $this->artisan('ralph:build')
         ->expectsOutputToContain('No specs found in specs/backlog/')
