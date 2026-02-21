@@ -5,7 +5,7 @@ use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
-use Satoved\Lararalph\LoopRunnerResult;
+use Satoved\Lararalph\Enums\LoopRunnerResult;
 use Satoved\Lararalph\Tests\Fakes\FakeLoopRunner;
 use Satoved\Lararalph\Tests\Fakes\FakeSpecRepository;
 use Satoved\Lararalph\Worktree\WorktreeCreator;

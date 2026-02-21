@@ -2,7 +2,7 @@
 
 namespace Satoved\Lararalph\Contracts;
 
-use Satoved\Lararalph\LoopRunnerResult;
+use Satoved\Lararalph\Enums\LoopRunnerResult;
 
 interface LoopRunner
 {

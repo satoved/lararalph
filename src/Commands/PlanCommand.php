@@ -10,8 +10,8 @@ use Satoved\Lararalph\Contracts\SpecRepository;
 use Satoved\Lararalph\Exceptions\NoBacklogSpecs;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
-use Satoved\Lararalph\FileSpecRepository;
-use Satoved\Lararalph\LoopRunnerResult;
+use Satoved\Lararalph\Repositories\FileSpecRepository;
+use Satoved\Lararalph\Enums\LoopRunnerResult;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 class PlanCommand extends Command

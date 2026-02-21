@@ -5,7 +5,7 @@ namespace Satoved\Lararalph\Tests\Fakes;
 use Closure;
 use Satoved\Lararalph\Contracts\LoopRunner;
 use Satoved\Lararalph\Contracts\Spec;
-use Satoved\Lararalph\LoopRunnerResult;
+use Satoved\Lararalph\Enums\LoopRunnerResult;
 
 class FakeLoopRunner implements LoopRunner
 {

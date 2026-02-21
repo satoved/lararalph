@@ -1,6 +1,6 @@
 <?php
 
-namespace Satoved\Lararalph;
+namespace Satoved\Lararalph\Enums;
 
 enum LoopRunnerResult: int
 {

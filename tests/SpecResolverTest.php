@@ -3,7 +3,7 @@
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
-use Satoved\Lararalph\FileSpecRepository;
+use Satoved\Lararalph\Repositories\FileSpecRepository;
 
 beforeEach(function () {
     $this->tempDir = realpath(sys_get_temp_dir()).'/lararalph-spec-test-'.uniqid();

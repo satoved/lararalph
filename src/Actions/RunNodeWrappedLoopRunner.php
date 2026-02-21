@@ -1,11 +1,13 @@
 <?php
 
-namespace Satoved\Lararalph;
+namespace Satoved\Lararalph\Actions;
 
 use Satoved\Lararalph\Contracts\LoopRunner;
 use Satoved\Lararalph\Contracts\Spec;
+use Satoved\Lararalph\Enums\LoopRunnerResult;
+use Satoved\Lararalph\LararalphServiceProvider;
 
-class NodeWrapperLoopRunner implements LoopRunner
+class RunNodeWrappedLoopRunner implements LoopRunner
 {
     public function run(Spec $spec, string $prompt, string $workingDirectory, int $maxIterations = 30): LoopRunnerResult
     {

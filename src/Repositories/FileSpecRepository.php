@@ -1,6 +1,6 @@
 <?php
 
-namespace Satoved\Lararalph;
+namespace Satoved\Lararalph\Repositories;
 
 use Satoved\Lararalph\Contracts\Spec;
 use Satoved\Lararalph\Contracts\SpecRepository;

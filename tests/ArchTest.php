@@ -13,5 +13,5 @@ arch('worktree steps implement WorktreeSetupStep')
     ->toImplement(WorktreeSetupStep::class);
 
 arch('FileSpecResolver implements SpecResolver contract')
-    ->expect('Satoved\Lararalph\FileSpecRepository')
+    ->expect('Satoved\Lararalph\Repositories\FileSpecRepository')
     ->toImplement(SpecRepository::class);
