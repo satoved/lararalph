@@ -128,7 +128,7 @@ describe('resolve', function () {
         expect($this->resolver->resolve('nonexistent'))->toBeNull();
     });
 
-    it('returns null when PRD.md is missing', function () {
+    it('returns null when PRD is missing', function () {
         mkdir($this->tempDir.'/specs/backlog/no-prd', 0755, true);
 
         expect($this->resolver->resolve('no-prd'))->toBeNull();

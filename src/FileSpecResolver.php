@@ -9,6 +9,10 @@ use function Laravel\Prompts\search;
 
 class FileSpecResolver implements SpecResolver
 {
+    public const string BACKLOG_DIR = 'specs/backlog';
+
+    public const string COMPLETE_DIR = 'specs/complete';
+
     public function choose(string $label = 'Select a spec'): ?string
     {
         $specs = $this->getBacklogSpecs();
@@ -29,7 +33,7 @@ class FileSpecResolver implements SpecResolver
 
     public function getBacklogSpecs(): array
     {
-        $specsDir = getcwd().'/specs/backlog';
+        $specsDir = getcwd().'/'.self::BACKLOG_DIR;
         if (! is_dir($specsDir)) {
             return [];
         }
@@ -47,7 +51,7 @@ class FileSpecResolver implements SpecResolver
             return null;
         }
 
-        $prdFile = $specPath.'/PRD.md';
+        $prdFile = $specPath.'/'.Spec::PRD_FILENAME;
         if (! file_exists($prdFile)) {
             return null;
         }
@@ -56,14 +60,14 @@ class FileSpecResolver implements SpecResolver
             name: basename($specPath),
             absoluteFolderPath: $specPath,
             absolutePrdFilePath: $prdFile,
-            absolutePlanFilePath: $specPath.'/IMPLEMENTATION_PLAN.md',
+            absolutePlanFilePath: $specPath.'/'.Spec::PLAN_FILENAME,
         );
     }
 
     private function findSpecPath(string $spec): ?string
     {
-        $backlogDir = getcwd().'/specs/backlog';
-        $completeDir = getcwd().'/specs/complete';
+        $backlogDir = getcwd().'/'.self::BACKLOG_DIR;
+        $completeDir = getcwd().'/'.self::COMPLETE_DIR;
 
         // First, try exact match in backlog
         $exactPath = $backlogDir.'/'.$spec;
