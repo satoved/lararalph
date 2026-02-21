@@ -3,33 +3,13 @@
 namespace Satoved\Lararalph;
 
 use Satoved\Lararalph\Contracts\Spec;
-use Satoved\Lararalph\Contracts\SpecResolver;
+use Satoved\Lararalph\Contracts\SpecRepository;
 
-use function Laravel\Prompts\search;
-
-class FileSpecResolver implements SpecResolver
+class FileSpecRepository implements SpecRepository
 {
     public const string BACKLOG_DIR = 'specs/backlog';
 
     public const string COMPLETE_DIR = 'specs/complete';
-
-    public function choose(string $label = 'Select a spec'): ?string
-    {
-        $specs = $this->getBacklogSpecs();
-
-        if (empty($specs)) {
-            return null;
-        }
-
-        $specs = array_combine($specs, $specs);
-
-        return search(
-            label: $label,
-            options: fn (string $value) => strlen($value) > 0
-                ? array_filter($specs, fn ($s) => str_contains(strtolower($s), strtolower($value)))
-                : $specs,
-        );
-    }
 
     public function getBacklogSpecs(): array
     {

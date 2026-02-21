@@ -3,10 +3,11 @@
 namespace Satoved\Lararalph\Commands;
 
 use Illuminate\Console\Command;
+use Satoved\Lararalph\Actions\ChooseSpec;
 use Satoved\Lararalph\AgentRunner;
 use Satoved\Lararalph\Contracts\Spec;
-use Satoved\Lararalph\Contracts\SpecResolver;
-use Satoved\Lararalph\FileSpecResolver;
+use Satoved\Lararalph\Contracts\SpecRepository;
+use Satoved\Lararalph\FileSpecRepository;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 class PlanCommand extends Command
@@ -18,13 +19,13 @@ class PlanCommand extends Command
 
     protected $description = 'Create an implementation plan for a PRD by analyzing the codebase';
 
-    public function handle(SpecResolver $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator)
+    public function handle(SpecRepository $specs, AgentRunner $runner, WorktreeCreator $worktreeCreator, ChooseSpec $chooseSpec)
     {
         $specName = $this->argument('spec');
         if (! $specName) {
-            $specName = $specs->choose('Select a spec to plan');
+            $specName = $chooseSpec('Select a spec to plan');
             if (! $specName) {
-                $this->error('No specs found in '.FileSpecResolver::BACKLOG_DIR.'/');
+                $this->error('No specs found in '.FileSpecRepository::BACKLOG_DIR.'/');
 
                 return 1;
             }

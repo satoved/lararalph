@@ -1,7 +1,7 @@
 <?php
 
 use Satoved\Lararalph\Contracts\Spec;
-use Satoved\Lararalph\FileSpecResolver;
+use Satoved\Lararalph\FileSpecRepository;
 
 beforeEach(function () {
     $this->tempDir = realpath(sys_get_temp_dir()).'/lararalph-spec-test-'.uniqid();
@@ -11,7 +11,7 @@ beforeEach(function () {
     $this->originalCwd = getcwd();
     chdir($this->tempDir);
 
-    $this->resolver = new FileSpecResolver;
+    $this->resolver = new FileSpecRepository;
 });
 
 afterEach(function () {

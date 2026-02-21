@@ -2,7 +2,7 @@
 
 use Satoved\Lararalph\AgentRunner;
 use Satoved\Lararalph\Contracts\Spec;
-use Satoved\Lararalph\Contracts\SpecResolver;
+use Satoved\Lararalph\Contracts\SpecRepository;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 beforeEach(function () {
@@ -27,9 +27,9 @@ afterEach(function () {
 });
 
 it('runs build successfully with all files present', function () {
-    $specs = Mockery::mock(SpecResolver::class);
+    $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->with('test-spec')->andReturn($this->resolved);
-    $this->app->instance(SpecResolver::class, $specs);
+    $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
     $runner->shouldReceive('run')
@@ -44,9 +44,9 @@ it('runs build successfully with all files present', function () {
 });
 
 it('passes custom iterations to runner', function () {
-    $specs = Mockery::mock(SpecResolver::class);
+    $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
-    $this->app->instance(SpecResolver::class, $specs);
+    $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
     $runner->shouldReceive('run')
@@ -60,9 +60,9 @@ it('passes custom iterations to runner', function () {
 });
 
 it('fails when spec resolution returns null', function () {
-    $specs = Mockery::mock(SpecResolver::class);
+    $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->with('nonexistent')->andReturn(null);
-    $this->app->instance(SpecResolver::class, $specs);
+    $this->app->instance(SpecRepository::class, $specs);
 
     $this->artisan('ralph:build', ['spec' => 'nonexistent'])
         ->expectsOutputToContain('Spec not found or PRD.md missing: nonexistent')
@@ -70,9 +70,9 @@ it('fails when spec resolution returns null', function () {
 });
 
 it('fails when no specs available and no argument given', function () {
-    $specs = Mockery::mock(SpecResolver::class);
-    $specs->shouldReceive('choose')->once()->andReturn(null);
-    $this->app->instance(SpecResolver::class, $specs);
+    $chooseSpec = Mockery::mock(Satoved\Lararalph\Actions\ChooseSpec::class);
+    $chooseSpec->shouldReceive('__invoke')->once()->andReturn(null);
+    $this->app->instance(Satoved\Lararalph\Actions\ChooseSpec::class, $chooseSpec);
 
     $this->artisan('ralph:build')
         ->expectsOutputToContain('No specs found in specs/backlog/')
@@ -82,9 +82,9 @@ it('fails when no specs available and no argument given', function () {
 it('fails when implementation plan is missing', function () {
     unlink($this->specDir.'/IMPLEMENTATION_PLAN.md');
 
-    $specs = Mockery::mock(SpecResolver::class);
+    $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
-    $this->app->instance(SpecResolver::class, $specs);
+    $this->app->instance(SpecRepository::class, $specs);
 
     $this->artisan('ralph:build', ['spec' => 'test-spec'])
         ->expectsOutputToContain('IMPLEMENTATION_PLAN.md not found')
@@ -93,9 +93,9 @@ it('fails when implementation plan is missing', function () {
 });
 
 it('renders the build prompt with correct file paths', function () {
-    $specs = Mockery::mock(SpecResolver::class);
+    $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
-    $this->app->instance(SpecResolver::class, $specs);
+    $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
     $runner->shouldReceive('run')
@@ -112,9 +112,9 @@ it('renders the build prompt with correct file paths', function () {
 });
 
 it('propagates runner exit code', function () {
-    $specs = Mockery::mock(SpecResolver::class);
+    $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
-    $this->app->instance(SpecResolver::class, $specs);
+    $this->app->instance(SpecRepository::class, $specs);
 
     $runner = Mockery::mock(AgentRunner::class);
     $runner->shouldReceive('run')->once()->andReturn(2);
@@ -125,9 +125,9 @@ it('propagates runner exit code', function () {
 });
 
 it('creates worktree and passes cwd to runner when --create-worktree is set', function () {
-    $specs = Mockery::mock(SpecResolver::class);
+    $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
-    $this->app->instance(SpecResolver::class, $specs);
+    $this->app->instance(SpecRepository::class, $specs);
 
     $worktreeCreator = Mockery::mock(WorktreeCreator::class);
     $worktreeCreator->shouldReceive('create')
@@ -150,9 +150,9 @@ it('creates worktree and passes cwd to runner when --create-worktree is set', fu
 });
 
 it('does not create worktree without --create-worktree flag', function () {
-    $specs = Mockery::mock(SpecResolver::class);
+    $specs = Mockery::mock(SpecRepository::class);
     $specs->shouldReceive('resolve')->once()->andReturn($this->resolved);
-    $this->app->instance(SpecResolver::class, $specs);
+    $this->app->instance(SpecRepository::class, $specs);
 
     $worktreeCreator = Mockery::mock(WorktreeCreator::class);
     $worktreeCreator->shouldNotReceive('create');
