@@ -60,9 +60,7 @@ composer require satoved/lararalph
 Publish config, specs directory, and Claude skill:
 
 ```bash
-php artisan vendor:publish --tag="lararalph-config"
-php artisan vendor:publish --tag="lararalph-specs"
-php artisan vendor:publish --tag="lararalph-claude"
+php artisan vendor:publish --tag="lararalph-config" --tag="lararalph-specs" --tag="lararalph-claude"
 ```
 
 ## Usage
