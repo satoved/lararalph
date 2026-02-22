@@ -42,3 +42,7 @@ config/lararalph.php                 # Worktree setup steps array
 resources/views/prompts/             # Blade templates to publish prompts for editing
 bin/ralph-loop.js                    # Node.js script managing agent loop iterations
 ```
+
+# Before Committing:
+1. composer test
+2. composer format
