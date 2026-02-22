@@ -6,6 +6,7 @@ use Satoved\Lararalph\Contracts\SpecRepository;
 use Satoved\Lararalph\Enums\LoopRunnerResult;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
+use Satoved\Lararalph\Exceptions\UncommittedChanges;
 use Satoved\Lararalph\Tests\Fakes\FakeLoopRunner;
 use Satoved\Lararalph\Tests\Fakes\FakeSpecRepository;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
@@ -197,6 +198,21 @@ it('creates worktree and passes cwd to runner when --create-worktree is set', fu
         ->assertExitCode(0);
 
     expect($runner->receivedWorkingDirectory)->toBe('/tmp/myapp-test-spec');
+});
+
+it('fails with error when worktree creation detects uncommitted changes', function () {
+    $specs = new FakeSpecRepository(spec: $this->resolved);
+    $this->app->instance(SpecRepository::class, $specs);
+
+    $worktreeCreator = Mockery::mock(WorktreeCreator::class);
+    $worktreeCreator->shouldReceive('create')
+        ->once()
+        ->andThrow(new UncommittedChanges('Cannot create worktree: you have uncommitted changes. Please commit or stash them first.'));
+    $this->app->instance(WorktreeCreator::class, $worktreeCreator);
+
+    $this->artisan('ralph:plan', ['spec' => 'test-spec', '--create-worktree' => true])
+        ->expectsOutputToContain('uncommitted changes')
+        ->assertExitCode(1);
 });
 
 it('does not create worktree without --create-worktree flag', function () {

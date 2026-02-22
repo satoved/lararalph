@@ -4,6 +4,7 @@ namespace Satoved\Lararalph\Worktree;
 
 use RuntimeException;
 use Satoved\Lararalph\Contracts\WorktreeSetupStep;
+use Satoved\Lararalph\Exceptions\UncommittedChanges;
 
 class WorktreeCreator
 {
@@ -21,6 +22,8 @@ class WorktreeCreator
 
     public function create(string $spec): string
     {
+        $this->ensureCleanWorkingTree();
+
         $worktreePath = $this->getWorktreePath($spec);
 
         if (! is_dir($worktreePath)) {
@@ -47,5 +50,23 @@ class WorktreeCreator
         }
 
         return $worktreePath;
+    }
+
+    private function ensureCleanWorkingTree(): void
+    {
+        $basePath = escapeshellarg(base_path());
+        exec("cd {$basePath} && git status --porcelain 2>&1", $output, $exitCode);
+
+        if ($exitCode !== 0) {
+            throw new RuntimeException(
+                'Failed to check git status: '.implode("\n", $output)
+            );
+        }
+
+        if (! empty($output)) {
+            throw new UncommittedChanges(
+                'Cannot create worktree: you have uncommitted changes. Please commit or stash them first.'
+            );
+        }
     }
 }

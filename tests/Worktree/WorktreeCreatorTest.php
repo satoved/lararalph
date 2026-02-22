@@ -1,6 +1,7 @@
 <?php
 
 use Satoved\Lararalph\Contracts\WorktreeSetupStep;
+use Satoved\Lararalph\Exceptions\UncommittedChanges;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
 beforeEach(function () {
@@ -91,6 +92,19 @@ it('prefixes branch name with ralph/', function () {
         ->toBe('ralph/2025-05-01-feature-name');
 });
 
+it('throws RuntimeException when working tree has uncommitted changes', function () {
+    // Create an uncommitted file
+    file_put_contents($this->tempDir.'/dirty.txt', 'uncommitted');
+    exec("cd {$this->tempDir} && git add dirty.txt 2>&1");
+
+    config(['lararalph.worktree_setup' => []]);
+
+    $creator = new WorktreeCreator;
+
+    expect(fn () => $creator->create('test-feature'))
+        ->toThrow(UncommittedChanges::class);
+});
+
 it('throws RuntimeException on git failure', function () {
     // Point to a non-git directory
     $nonGitDir = sys_get_temp_dir().'/lararalph-nongit-'.uniqid();
@@ -102,7 +116,7 @@ it('throws RuntimeException on git failure', function () {
     $creator = new WorktreeCreator;
 
     expect(fn () => $creator->create('test-feature'))
-        ->toThrow(RuntimeException::class, 'Failed to create git worktree');
+        ->toThrow(RuntimeException::class, 'Failed to check git status');
 
     // Cleanup
     exec("rm -rf {$nonGitDir}");

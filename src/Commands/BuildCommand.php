@@ -11,6 +11,7 @@ use Satoved\Lararalph\Enums\LoopRunnerResult;
 use Satoved\Lararalph\Exceptions\NoBacklogSpecs;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotContainPrdFile;
 use Satoved\Lararalph\Exceptions\SpecFolderDoesNotExist;
+use Satoved\Lararalph\Exceptions\UncommittedChanges;
 use Satoved\Lararalph\Repositories\FileSpecRepository;
 use Satoved\Lararalph\Worktree\WorktreeCreator;
 
@@ -52,12 +53,18 @@ class BuildCommand extends Command
             return self::FAILURE;
         }
 
-        if ($this->option('create-worktree')) {
-            $this->info('Creating worktree...');
-            $cwd = $worktreeCreator->create($spec->name);
-            $this->info("Worktree created: {$cwd}");
-        } else {
-            $cwd = base_path();
+        try {
+            if ($this->option('create-worktree')) {
+                $this->info('Creating worktree...');
+                $cwd = $worktreeCreator->create($spec->name);
+                $this->info("Worktree created: {$cwd}");
+            } else {
+                $cwd = base_path();
+            }
+        } catch (UncommittedChanges $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
         }
 
         $this->info("Building: {$spec->name}");
