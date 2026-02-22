@@ -2,9 +2,12 @@
     "name": "satoved/lararalph",
     "description": "Agentic Ralph Wiggum loops for Laravel",
     "keywords": [
-        "Oleg Makedonsky",
         "laravel",
-        "lararalph"
+        "lararalph",
+        "ralph wiggum",
+        "agentic development",
+        "agentic loop",
+        "claude code"
     ],
     "homepage": "https://github.com/satoved/lararalph",
     "license": "MIT",
